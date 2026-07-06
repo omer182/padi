@@ -50,13 +50,15 @@ const char* NOTE_NAMES[12] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","
 // 16-step patterns (bit0 = step 0). GM drums on channel 10.
 struct Beat { const char* name; byte bpm; uint16_t kick, snare, chat, ohat; };
 const Beat BEATS[] = {
+  //  name       bpm  kick    snare   closedHat openHat
   {"Off",     0,  0x0000, 0x0000, 0x0000, 0x0000},
-  {"RnB",     86, 0x0441, 0x1010, 0x5555, 0x0000},
-  {"HipHop",  90, 0x0481, 0x1010, 0x5555, 0x0000},
-  {"Trap",    70, 0x0041, 0x0100, 0xFFFF, 0x0000},
-  {"House",  124, 0x1111, 0x1010, 0x0000, 0x4444},
-  {"Pop",    100, 0x0101, 0x1010, 0x5555, 0x0000},
-  {"Boom",    92, 0x0421, 0x1010, 0x1111, 0x0000},
+  {"RnB",     86, 0x0441, 0x1010, 0x5555, 0x0000},  // laid-back, 8th hats
+  {"HipHop",  88, 0x0481, 0x1010, 0x5555, 0x0000},  // kick pickup before snare
+  {"BoomBap", 92, 0x0409, 0x1010, 0x5555, 0x0000},  // 90s East-coast
+  {"Trap",   140, 0x0041, 0x0100, 0xFFFF, 0x0000},  // half-time, 16th hats
+  {"House",  124, 0x1111, 0x1010, 0x0000, 0x4444},  // 4-on-floor + offbeat open hats
+  {"Funk",   104, 0x0449, 0x1010, 0xFFFF, 0x0000},  // syncopated kick, 16th hats
+  {"Disco",  120, 0x1111, 0x1010, 0x5555, 0x4444},  // 4-floor + hats everywhere
 };
 const byte BEAT_COUNT = sizeof(BEATS) / sizeof(BEATS[0]);
 byte currentBeat = 0;              // 0 = off
@@ -320,9 +322,9 @@ void drawMain() {
   display.setCursor(0, 18);
   display.print(modeName());
   if (held[0]) {
-    display.setTextSize(1);
-    int w = (int)strlen(held) * 6;
-    display.setCursor(128 - w, 22);
+    display.setTextSize(2);
+    int w = (int)strlen(held) * 12;
+    display.setCursor(128 - w, 18);
     display.print(held);
   }
 
