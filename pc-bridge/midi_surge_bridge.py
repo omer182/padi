@@ -151,11 +151,57 @@ OVERRIDES = {
 }
 
 
+# ---------------------------------------------------------------------------
+#  Surge instrument catalog: 6 categories x 8 curated patches.
+#  Order MUST match catalog.h (CAT_NAMES / CAT_PATCH_NAMES) on the device.
+#  The device sends Bank Select (CC0 = category index) + Program Change (patch).
+# ---------------------------------------------------------------------------
+CATALOG = [
+    [  # 0 Keys
+        AZ + r"\Keys\Grand Piano", AZ + r"\Keys\Upright Piano", AZ + r"\Keys\Soft Piano",
+        F + r"\Keys\EP 1", F + r"\Keys\DX EP", F + r"\Keys\Soft Suitcase",
+        F + r"\Keys\Organ 1", F + r"\Keys\Church",
+    ],
+    [  # 1 Pads
+        F + r"\Pads\MKS-70 Warm Pad", F + r"\Pads\Pad 1", F + r"\Pads\Bright",
+        F + r"\Pads\Distant", F + r"\Pads\Ghost Pad", F + r"\Pads\Harmonic Sweep",
+        F + r"\Pads\Bell Pad", F + r"\Pads\Ooh",
+    ],
+    [  # 2 Leads
+        F + r"\Leads\Classic Lead 1", F + r"\Leads\Classic Lead 2", F + r"\Leads\Crisp PWM",
+        F + r"\Leads\Digi It", F + r"\Leads\Butter", F + r"\Leads\Fairy",
+        F + r"\Leads\FM Rock", F + r"\Leads\Dome",
+    ],
+    [  # 3 Bass
+        F + r"\Basses\Bass 1", F + r"\Basses\E-Bass", F + r"\Basses\Rubber Bass",
+        F + r"\Basses\FM Bass 1", F + r"\Basses\Deep End", F + r"\Basses\Distorted Bass",
+        F + r"\Basses\Digibass", F + r"\Basses\Piano Bass",
+    ],
+    [  # 4 Plucks
+        F + r"\Plucks\Bell 1", F + r"\Plucks\FM Pluck", F + r"\Plucks\E-Guitar",
+        F + r"\Plucks\Clean", F + r"\Plucks\Diamonds", F + r"\Plucks\Delay Dancer",
+        F + r"\Plucks\Fantasy Bell", F + r"\Plucks\80s Gliss",
+    ],
+    [  # 5 Poly
+        F + r"\Polysynths\Jupiter-8", F + r"\Polysynths\Juno-60 Strings", F + r"\Polysynths\Korg Triton",
+        F + r"\Polysynths\Fast Poly", F + r"\Polysynths\FM Poly", F + r"\Polysynths\Fat Curtis",
+        F + r"\Polysynths\Ahh Polly", F + r"\Polysynths\Gentle",
+    ],
+]
+
+
 def resolve(program):
     """GM program number -> absolute patch path (no extension), always valid."""
     if program in OVERRIDES:
         return OVERRIDES[program]
     return FAMILY_DEFAULT[program // 8]
+
+
+def resolve_catalog(bank, program):
+    """(category, patch) -> patch path, or None if out of range."""
+    if 0 <= bank < len(CATALOG) and 0 <= program < len(CATALOG[bank]):
+        return CATALOG[bank][program]
+    return None
 
 
 def validate():
@@ -166,12 +212,16 @@ def validate():
         path = resolve(p) + ".fxp"
         if not os.path.isfile(path):
             missing.add(resolve(p))
+    for cat in CATALOG:
+        for path in cat:
+            if not os.path.isfile(path + ".fxp"):
+                missing.add(path)
     if missing:
         print(f"!! {len(missing)} mapped patch file(s) NOT found:")
         for m in sorted(missing):
             print("   ", m + ".fxp")
     else:
-        print("All 128 GM programs map to existing patches. Good.")
+        print("All GM programs + catalog patches map to existing files. Good.")
     return not missing
 
 
@@ -211,6 +261,7 @@ def run_bridge():
 
     print(f"Bridge running. Owning '{port}', forwarding to Surge via OSC {OSC_HOST}:{OSC_PORT}.")
     all_notes_off(osc)  # clean slate on startup
+    pending_bank = None  # last Bank Select (CC0) = catalog category
     # The bridge OWNS the Pico input (Windows MIDI is single-client), so it must
     # forward notes to Surge too -- surge-cli runs OSC-only, not bound to MIDI.
     with mido.open_input(port) as inp:
@@ -227,6 +278,9 @@ def run_bridge():
                 if msg.channel == DRUM_CHANNEL and drum_out is not None:
                     drum_out.send(msg)
                     continue
+                if msg.control == 0:            # Bank Select MSB = catalog category
+                    pending_bank = msg.value
+                    continue
                 v = msg.value / 127.0
                 c = msg.control
                 if   c == 7:  osc.send_message("/param/global/volume", v)        # Volume
@@ -238,18 +292,25 @@ def run_bridge():
             elif msg.type == "pitchwheel":  # Pitch knob -> Surge pitch bend
                 osc.send_message("/pbend", [0.0, msg.pitch / 8192.0])
             elif msg.type == "program_change":
-                path = load_program(osc, msg.program)
-                blog(f"PC {msg.program:3d} -> {path.split(chr(92))[-1]}")
+                path = resolve_catalog(pending_bank, msg.program) if pending_bank is not None else None
+                if path is None:                    # no/invalid bank -> GM fallback
+                    path = resolve(msg.program)
+                    tag = f"PC {msg.program:3d}"
+                else:
+                    tag = f"cat {pending_bank}/{msg.program}"
+                osc.send_message("/patch/load", path)
+                blog(f"{tag} -> {path.split(chr(92))[-1]}")
 
 
 def run_test():
     osc = make_osc()
-    demo = [0, 24, 40, 48, 56, 65, 33, 80, 89]  # piano..warm pad
-    NOTE_NAMES = "C C# D D# E F F# G G# A A# B".split()
-    print("=== bridge OSC test: cycling GM instruments ===")
-    for prog in demo:
-        path = load_program(osc, prog)
-        print(f"  GM {prog:3d} -> {path.split(chr(92))[-1]}")
+    # One patch from each catalog category (cat, patch).
+    demo = [(0, 0), (0, 3), (1, 0), (2, 0), (3, 0), (4, 1), (5, 0), (5, 1)]
+    print("=== bridge OSC test: cycling catalog instruments ===")
+    for bank, prog in demo:
+        path = resolve_catalog(bank, prog)
+        osc.send_message("/patch/load", path)
+        print(f"  cat {bank}/{prog} -> {path.split(chr(92))[-1]}")
         time.sleep(1.6)
         for n in (60, 64, 67, 72):
             osc.send_message("/mnote", [float(n), 100.0]); time.sleep(0.4)

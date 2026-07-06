@@ -10,6 +10,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "gm_instruments.h"   // GM_NAMES[128], GM_FAMILY_NAMES[16]
+#include "catalog.h"          // Surge catalog: CAT_NAMES[], CAT_PATCH_NAMES[][]
 
 Adafruit_USBD_MIDI usb_midi;
 MIDI_CREATE_INSTANCE(Adafruit_USBD_MIDI, usb_midi, MIDI);
@@ -39,10 +40,11 @@ bool noteActive[128] = {false};
 
 const char* PRESET_NAMES[4] = {"Major", "Chromatic", "Chords", "Generat"};
 
-// ---- Current instrument (GM program) + which family the menu is browsing ----
-byte currentProgram = 0;   // 0 = Grand Piano
-byte instFamily = 0;       // 0..15 (Piano, Chromatic Perc, Organ, Guitar, ...)
-unsigned long programAnnounceAt = 0;  // resend Program Change once host is up
+// ---- Current instrument (Surge catalog: category + patch) ----
+byte curCat = 0;           // selected category (0 = Keys)
+byte curPatch = 0;         // selected patch in that category (0 = Grand Piano)
+byte instCat = 0;          // which category the menu is browsing
+unsigned long programAnnounceAt = 0;  // resend selection once host is up
 
 const char* NOTE_NAMES[12] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
 
@@ -145,6 +147,12 @@ int8_t octave = -1;
 byte velocity = 100;
 byte midiChannel = 1;
 byte rootNote = 60;
+
+// Tell the bridge which patch to load: Bank Select (CC0 = category) + Program Change.
+void sendInstrument(byte cat, byte patch) {
+  MIDI.sendControlChange(0, cat, midiChannel);   // CC0 = Bank Select MSB = category
+  MIDI.sendProgramChange(patch, midiChannel);
+}
 
 // Use 127 as a marker for "no note" in chord voicings
 const int8_t NO_NOTE = 127;
@@ -307,7 +315,9 @@ void drawMain() {
   // Header (small, size 1) so full instrument names fit; beat shown on the right
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.print(GM_NAMES[currentProgram]);
+  display.print(CAT_NAMES[curCat]);
+  display.print(' ');
+  display.print(CAT_PATCH_NAMES[curCat][curPatch]);
   if (currentBeat != 0) {
     const char* bn = BEATS[currentBeat].name;
     display.setCursor(128 - (int)strlen(bn) * 6, 0);
@@ -434,9 +444,10 @@ void updateBeats(unsigned long now) {
 //  Instrument selection (sends Program Change; PC bridge maps it to a Surge
 //  patch). Plays a short 3-note preview so you hear what you picked.
 // ---------------------------------------------------------------------------
-void selectInstrument(byte prog) {
-  currentProgram = prog;
-  MIDI.sendProgramChange(prog, midiChannel);
+void selectInstrument(byte cat, byte patch) {
+  curCat = cat;
+  curPatch = patch;
+  sendInstrument(cat, patch);
   playStyle = STYLE_SCALED;
   displayDirty = true;
   drawMenuNow();                 // refresh selection marker before the preview delay
@@ -473,12 +484,12 @@ void drawMenu() {
   display.setTextSize(1);
 
   const char* footer = "13<4> pg  15/16 exit";
-  if (currentPage == 1) {          // INSTRUMENTS (family = category)
-    display.setCursor(0, 0); display.print(GM_FAMILY_NAMES[instFamily]);
-    display.setCursor(96, 0); display.print(instFamily + 1); display.print("/16");
-    for (byte i = 0; i < 8; i++) {
-      byte prog = instFamily * 8 + i;
-      drawMenuItem(i, i + 1, GM_NAMES[prog], prog == currentProgram);
+  if (currentPage == 1) {          // INSTRUMENTS (Surge catalog categories)
+    display.setCursor(0, 0); display.print(CAT_NAMES[instCat]);
+    display.setCursor(102, 0); display.print(instCat + 1); display.print("/"); display.print(CAT_COUNT);
+    for (byte i = 0; i < CAT_SIZE; i++) {
+      bool sel = (instCat == curCat && i == curPatch);
+      drawMenuItem(i, i + 1, CAT_PATCH_NAMES[instCat][i], sel);
     }
     footer = "1-8 pick  9/10 categ";
   } else if (currentPage == 2) {   // BEATS
@@ -532,7 +543,7 @@ void setup() {
     delay(100);
   }
 
-  currentProgram = 0;                    // default: Grand Piano
+  curCat = 0; curPatch = 0; instCat = 0; // default: Keys / Grand Piano
   programAnnounceAt = millis() + 4000;   // tell the host once it's listening
   displayDirty = true;
 }
@@ -594,7 +605,7 @@ void loop() {
   // Announce the current instrument shortly after boot (host/bridge not ready in setup()).
   if (programAnnounceAt && now >= programAnnounceAt) {
     programAnnounceAt = 0;
-    MIDI.sendProgramChange(currentProgram, midiChannel);
+    sendInstrument(curCat, curPatch);
   }
 
   MIDI.read();
@@ -665,9 +676,9 @@ void handleMenuPress(byte pad) {
   if (pad == 14 || pad == 15) { toggleMenu(); return; }  // exit from any page
 
   if (currentPage == 1) {          // INSTRUMENTS: 1-8 pick, 9/10 change category
-    if (pad < 8) selectInstrument(instFamily * 8 + pad);
-    else if (pad == 8) instFamily = (instFamily + 15) % 16;   // pad 9 = prev category
-    else if (pad == 9) instFamily = (instFamily + 1) % 16;    // pad 10 = next category
+    if (pad < CAT_SIZE) selectInstrument(instCat, pad);
+    else if (pad == 8) instCat = (instCat + CAT_COUNT - 1) % CAT_COUNT;  // pad 9 = prev category
+    else if (pad == 9) instCat = (instCat + 1) % CAT_COUNT;              // pad 10 = next category
   } else if (currentPage == 2) {   // BEATS
     if (pad < BEAT_COUNT) beatSelect(pad);
   } else if (currentPage == 3) {   // SCALES
