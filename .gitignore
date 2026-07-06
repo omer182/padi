@@ -1,0 +1,7 @@
+# Python virtual env for the PC bridge (recreate with: python -m venv .venv)
+pc-bridge/.venv/
+# Runtime logs
+pc-bridge/*.log
+# Build artifacts
+build/
+*.uf2
