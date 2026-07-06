@@ -62,7 +62,6 @@ const byte BEAT_COUNT = sizeof(BEATS) / sizeof(BEATS[0]);
 byte currentBeat = 0;              // 0 = off
 byte beatStep = 0;
 unsigned long lastStepTime = 0;
-int bpm = 90;                      // global tempo (drives beats + synced FX)
 const byte GM_DRUM_CH = 10;
 const byte KICK = 36, SNARE = 38, CHAT = 42, OHAT = 46;
 
@@ -308,10 +307,9 @@ void drawMain() {
   display.setCursor(0, 0);
   display.print(GM_NAMES[currentProgram]);
   if (currentBeat != 0) {
-    char b[16];
-    snprintf(b, sizeof(b), "%s %d", BEATS[currentBeat].name, bpm);
-    display.setCursor(128 - (int)strlen(b) * 6, 0);
-    display.print(b);
+    const char* bn = BEATS[currentBeat].name;
+    display.setCursor(128 - (int)strlen(bn) * 6, 0);
+    display.print(bn);
   }
   display.drawFastHLine(0, 10, 128, SSD1306_WHITE);
 
@@ -410,38 +408,14 @@ void beatAllOff() {
 void beatSelect(byte idx) {
   if (idx >= BEAT_COUNT) return;
   currentBeat = idx;
-  if (idx > 0 && BEATS[idx].bpm > 0) bpm = BEATS[idx].bpm;  // adopt the groove's tempo
   beatStep = 0;
   lastStepTime = millis();
   beatAllOff();
   displayDirty = true;
 }
-
-// Tap tempo: tap in time; averages the last few intervals into BPM.
-void tapTempo() {
-  static unsigned long prev = 0;
-  static unsigned long intervals[3];
-  static byte n = 0;
-  unsigned long now = millis();
-  if (prev != 0 && now - prev < 2000) {          // within a sensible window
-    intervals[n % 3] = now - prev;
-    n++;
-    byte cnt = n < 3 ? n : 3;
-    unsigned long sum = 0;
-    for (byte i = 0; i < cnt; i++) sum += intervals[i];
-    unsigned long avg = sum / cnt;
-    if (avg > 0) bpm = constrain((int)(60000UL / avg), 40, 220);
-  } else {
-    n = 0;                                        // first tap / restart
-  }
-  prev = now;
-  displayDirty = true;
-}
-void adjustBpm(int d) { bpm = constrain(bpm + d, 40, 220); displayDirty = true; }
-
 void updateBeats(unsigned long now) {
-  if (currentBeat == 0) return;
-  unsigned long stepMs = 60000UL / bpm / 4;   // 16th notes at the global tempo
+  if (currentBeat == 0 || BEATS[currentBeat].bpm == 0) return;
+  unsigned long stepMs = 60000UL / BEATS[currentBeat].bpm / 4;   // 16th notes
   if (now - lastStepTime < stepMs) return;
   lastStepTime = now;
   const Beat& b = BEATS[currentBeat];
@@ -505,11 +479,10 @@ void drawMenu() {
       drawMenuItem(i, i + 1, GM_NAMES[prog], prog == currentProgram);
     }
     footer = "1-8 pick  9/10 categ";
-  } else if (currentPage == 2) {   // BEATS + tempo
-    display.setCursor(0, 0); display.print("BEATS  ");
-    display.print(bpm); display.print(" bpm");
+  } else if (currentPage == 2) {   // BEATS
+    display.setCursor(0, 0); display.print("BEATS");
     for (byte i = 0; i < BEAT_COUNT; i++) drawMenuItem(i, i + 1, BEATS[i].name, i == currentBeat);
-    footer = "9 tap  10/11 bpm  16 exit";
+    footer = "1-N beat  13<4>  16 exit";
   } else if (currentPage == 3) {   // SCALES
     display.setCursor(0, 0); display.print("SCALES");
     for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, SCALE_NAMES[i], i == currentScale);
@@ -593,9 +566,20 @@ void loop() {
     lastPadStates[i] = reading;
   }
   
+  // Check for preset save
+  if (inMenu && currentPage == 1) {
+    for (int i = 0; i < 4; i++) {
+      if (padStates[i] && padHoldStartTime[i] > 0) {
+        unsigned long holdDuration = now - padHoldStartTime[i];
+        if (holdDuration > PRESET_SAVE_HOLD_TIME && holdDuration < PRESET_SAVE_HOLD_TIME + 100) {
+          savePreset(i);
+        }
+      }
+    }
+  }
+  
   updatePot(now);
   updateBeats(now);
-  updateFX(now);
 
   // Redraw the screen when something changed (throttled).
   if (displayDirty && now - lastDisplayDraw > 40) {
@@ -612,56 +596,6 @@ void loop() {
   }
 
   MIDI.read();
-}
-
-// ---------------------------------------------------------------------------
-//  Hold-to-activate performance FX on the top row (GP12-15):
-//  12 Filter (muffle) | 13 Tape-stop | 14 Echo throw | 15 Stutter (BPM gate)
-// ---------------------------------------------------------------------------
-const byte FILT_CC = 74, ECHO_CC = 93;
-bool fxTapeStop = false;  unsigned long fxTapeStart = 0, fxLastPb = 0;
-bool fxStutter = false;   unsigned long fxLastGate = 0; bool fxGateMuted = false;
-
-bool isTopRow(byte pad) { return pad >= 12 && pad <= 15; }
-
-void fxOn(byte pad) {
-  if (pad == 12) MIDI.sendControlChange(FILT_CC, 16, midiChannel);          // close filter
-  else if (pad == 13) { fxTapeStop = true; fxTapeStart = millis(); }        // tape-stop ramp
-  else if (pad == 14) MIDI.sendControlChange(ECHO_CC, 110, midiChannel);    // echo send up
-  else if (pad == 15) { fxStutter = true; fxLastGate = millis(); fxGateMuted = false; }
-}
-void fxOff(byte pad) {
-  int vcc = map(volume, 0, 100, 0, 127);
-  if (pad == 12) MIDI.sendControlChange(FILT_CC, 127, midiChannel);         // open filter
-  else if (pad == 13) { fxTapeStop = false; MIDI.sendPitchBend(0, midiChannel); }
-  else if (pad == 14) MIDI.sendControlChange(ECHO_CC, 0, midiChannel);      // echo off
-  else if (pad == 15) { fxStutter = false; MIDI.sendControlChange(7, vcc, midiChannel); MIDI.sendControlChange(7, vcc, GM_DRUM_CH); }
-}
-void clearFX() {                         // reset everything (e.g. when menu opens)
-  fxTapeStop = fxStutter = false;
-  int vcc = map(volume, 0, 100, 0, 127);
-  MIDI.sendPitchBend(0, midiChannel);
-  MIDI.sendControlChange(FILT_CC, 127, midiChannel);
-  MIDI.sendControlChange(ECHO_CC, 0, midiChannel);
-  MIDI.sendControlChange(7, vcc, midiChannel);
-  MIDI.sendControlChange(7, vcc, GM_DRUM_CH);
-}
-void updateFX(unsigned long now) {
-  if (fxTapeStop && now - fxLastPb >= 20) {          // ramp pitch down over ~600ms
-    fxLastPb = now;
-    long bend = -(long)constrain(((now - fxTapeStart) * 8192UL) / 600UL, 0UL, 8192UL);
-    MIDI.sendPitchBend((int)bend, midiChannel);
-  }
-  if (fxStutter) {                                    // gate the mix on/off at 1/16
-    unsigned long gate = 60000UL / bpm / 4;
-    if (now - fxLastGate >= gate) {
-      fxLastGate = now;
-      fxGateMuted = !fxGateMuted;
-      int lvl = fxGateMuted ? 0 : map(volume, 0, 100, 0, 127);
-      MIDI.sendControlChange(7, lvl, midiChannel);
-      MIDI.sendControlChange(7, lvl, GM_DRUM_CH);
-    }
-  }
 }
 
 void handlePadPress(byte pad, unsigned long now) {
@@ -689,8 +623,7 @@ void handlePadPress(byte pad, unsigned long now) {
   }
   
   if (inMenu) return;
-  if (isTopRow(pad)) { fxOn(pad); return; }   // top row = hold-to-activate FX
-
+  
   playNote(pad, true);
 }
 
@@ -718,8 +651,6 @@ void handlePadRelease(byte pad, unsigned long now) {
   
   if (inMenu) {
     handleMenuPress(pad);
-  } else if (isTopRow(pad)) {
-    fxOff(pad);
   } else {
     playNote(pad, false);
   }
@@ -735,11 +666,8 @@ void handleMenuPress(byte pad) {
     if (pad < 8) selectInstrument(instFamily * 8 + pad);
     else if (pad == 8) instFamily = (instFamily + 15) % 16;   // pad 9 = prev category
     else if (pad == 9) instFamily = (instFamily + 1) % 16;    // pad 10 = next category
-  } else if (currentPage == 2) {   // BEATS + tempo
+  } else if (currentPage == 2) {   // BEATS
     if (pad < BEAT_COUNT) beatSelect(pad);
-    else if (pad == 8) tapTempo();      // pad 9  = TAP
-    else if (pad == 9) adjustBpm(-5);   // pad 10 = BPM -
-    else if (pad == 10) adjustBpm(5);   // pad 11 = BPM +
   } else if (currentPage == 3) {   // SCALES
     if (pad < 8) { currentScale = pad; playStyle = STYLE_SCALED; }
   } else if (currentPage == 4) {   // CHORDS
@@ -870,7 +798,6 @@ void toggleMenu() {
   inMenu = !inMenu;
   digitalWrite(LED_PIN, inMenu ? HIGH : LOW);
   allNotesOff();          // release only what's sounding (no 128-msg blast)
-  clearFX();              // cancel any held FX from the open-combo
   displayDirty = true;
   if (inMenu) currentPage = 1;
 }
