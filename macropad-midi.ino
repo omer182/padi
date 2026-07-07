@@ -411,37 +411,45 @@ int readPotFiltered() {
 void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
+  static int restRaw = -1;      // raw value where the knob last settled
+  static int lastR = 0, stable = 0;
+  static bool moving = false;
   if (now - last < POT_INTERVAL) return;
   // The OLED I2C write burst couples noise into the GP26 ADC. Don't sample the
   // pot for a moment after a redraw, so playing notes can't nudge the volume.
   if (now - lastDisplayDraw < 30) return;
   last = now;
   int raw = readPotFiltered();
-  if (ema < 0) ema = raw;
+  if (ema < 0) { ema = raw; restRaw = raw; lastR = raw; }
   ema += (raw - ema) * 0.20f;
   int r = (int)ema;
-  int target = constrain(map(r, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
 
-  // Slew-rate limit: chase the target a few steps per cycle. A real turn tracks
-  // smoothly (no pause); a momentary loose-wire blip can only nudge it MAXSTEP
-  // before the reading returns, instead of slamming the volume to a rail.
+  // Respond ONLY to a real turn: the reading must move past the noise floor from
+  // where it last settled. This makes note/chord/redraw/MIDI noise unable to
+  // move the volume -- it changes only when you actually turn the knob.
+  bool atEnd = (r <= POT_RAW_MIN || r >= POT_RAW_MAX);
+  if (!moving) {
+    if (abs(r - restRaw) < 18 && !atEnd) return;   // idle: ignore jitter
+    moving = true;
+  }
+
+  int target = constrain(map(r, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
+  // Slew-rate limit: chase the target a few steps per cycle for a smooth ramp.
   const int MAXSTEP = 7;
   int d = target - (int)volume;
-  int v;
-  if (abs(d) > MAXSTEP) {
-    v = (int)volume + (d > 0 ? MAXSTEP : -MAXSTEP);   // in motion -> slew + commit
-  } else {
-    // Near the target: ignore jitter (incl. residual redraw noise); snap to ends.
-    bool bigEnough = abs(d) >= 4;
-    bool hitEnd = (target == 0 || target == 100) && target != volume;
-    if (!bigEnough && !hitEnd) return;
-    v = target;
+  int v = (abs(d) > MAXSTEP) ? (int)volume + (d > 0 ? MAXSTEP : -MAXSTEP) : target;
+  if (v != (int)volume) {
+    volume = v;
+    int cc = map(volume, 0, 100, 0, 127);
+    MIDI.sendControlChange(VOLUME_CC, cc, midiChannel);   // melodic (Surge)
+    MIDI.sendControlChange(VOLUME_CC, cc, GM_DRUM_CH);    // drums (GM kit)
+    displayDirty = true;
   }
-  volume = v;
-  int cc = map(volume, 0, 100, 0, 127);
-  MIDI.sendControlChange(VOLUME_CC, cc, midiChannel);   // melodic (Surge)
-  MIDI.sendControlChange(VOLUME_CC, cc, GM_DRUM_CH);    // drums (GM kit)
-  displayDirty = true;
+
+  // Once the knob stops moving, latch the new rest point and go back to idle.
+  if (abs(r - lastR) <= 2) stable++; else stable = 0;
+  lastR = r;
+  if (stable >= 8 && !atEnd) { moving = false; restRaw = r; stable = 0; }
 }
 
 // ---------------------------------------------------------------------------
