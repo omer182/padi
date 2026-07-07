@@ -395,12 +395,23 @@ int readPotFiltered() {
 void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
+  static int calLo = 1023, calHi = 0;   // auto-calibration: observed raw extremes
   if (now - last < POT_INTERVAL) return;
   last = now;
   int raw = readPotFiltered();
   if (ema < 0) ema = raw;
   ema += (raw - ema) * 0.20f;
-  int target = constrain(map((int)ema, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
+  int r = (int)ema;
+
+  // Auto-calibrate: learn the pot's true end-to-end range as you turn it, so the
+  // ends always reach 0 and 100 regardless of the pot's actual span. Ignore
+  // implausible rail readings (loose-wire opens) so they can't poison the range.
+  if (r >= 20 && r <= 1003) {
+    if (r < calLo) calLo = r;
+    if (r > calHi) calHi = r;
+  }
+  if (calHi - calLo < 80) return;       // sweep the knob fully once to calibrate
+  int target = constrain(map(r, calLo, calHi, 100, 0), 0, 100);  // reversed wiring
 
   // Slew-rate limit: chase the target a few steps per cycle. A real turn tracks
   // smoothly (no pause); a momentary loose-wire blip can only nudge it MAXSTEP
