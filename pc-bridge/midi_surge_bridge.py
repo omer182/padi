@@ -247,6 +247,24 @@ def validate():
     return not missing
 
 
+# ---------------------------------------------------------------------------
+#  Knob-FX routing. The macropad's knob sends standard MIDI CCs (so it works
+#  on any host). Here we translate each into a Surge effect on scene-A insert
+#  slot 1 (/param/fx/a/1/...), retyping the slot as the effect changes.
+# ---------------------------------------------------------------------------
+FX_NATIVE = {                       # CC -> Surge scene param (0..1)
+    74: "/param/a/filter/1/cutoff",
+    71: "/param/a/filter/1/resonance",
+}
+FX_INSERT = {                       # CC -> (fx type index, mix/drive param #)
+    91: (11, 10),   # Reverb 2  -> param10 Mix
+    93: (9, 7),     # Chorus    -> param7  Mix
+    85: (1, 11),    # Delay     -> param11 Mix
+    86: (3, 7),     # Phaser    -> param7  Mix
+    87: (5, 5),     # Distortion-> param5  Drive
+}
+
+
 def make_osc():
     return SimpleUDPClient(OSC_HOST, OSC_PORT)
 
@@ -284,6 +302,13 @@ def run_bridge():
     print(f"Bridge running. Owning '{port}', forwarding to Surge via OSC {OSC_HOST}:{OSC_PORT}.")
     all_notes_off(osc)  # clean slate on startup
     pending_bank = None  # last Bank Select (CC0) = catalog category
+    loaded_fx = None     # FX type currently in insert slot a/1 (0 = off)
+
+    def set_insert(fxtype):
+        nonlocal loaded_fx
+        if loaded_fx != fxtype:
+            osc.send_message("/param/fx/a/1/type", float(fxtype))
+            loaded_fx = fxtype
     # The bridge OWNS the Pico input (Windows MIDI is single-client), so it must
     # forward notes to Surge too -- surge-cli runs OSC-only, not bound to MIDI.
     with mido.open_input(port) as inp:
@@ -305,11 +330,15 @@ def run_bridge():
                     continue
                 v = msg.value / 127.0
                 c = msg.control
-                if   c == 7:  osc.send_message("/param/global/volume", v)        # Volume
-                elif c == 74: osc.send_message("/param/a/filter/1/cutoff", v)     # Filter
-                elif c == 71: osc.send_message("/param/a/filter/1/resonance", v)  # Resonance
-                elif c == 91: osc.send_message("/param/fx/send/1/return", v)      # Reverb send
-                elif c == 93: osc.send_message("/param/fx/send/2/return", v)      # Delay send
+                if c == 7:
+                    osc.send_message("/param/global/volume", v)          # Volume (legacy)
+                elif c in FX_NATIVE:                                     # Filter / Resonance
+                    set_insert(0)                                       # drop any insert FX
+                    osc.send_message(FX_NATIVE[c], v)
+                elif c in FX_INSERT:                                     # Reverb/Chorus/Delay/...
+                    fxtype, mixp = FX_INSERT[c]
+                    set_insert(fxtype)
+                    osc.send_message(f"/param/fx/a/1/param{mixp}", v)
                 elif c in (120, 123): all_notes_off(osc)
             elif msg.type == "pitchwheel":  # Pitch knob -> Surge pitch bend
                 osc.send_message("/pbend", [0.0, msg.pitch / 8192.0])
@@ -321,6 +350,7 @@ def run_bridge():
                 else:
                     tag = f"cat {pending_bank}/{msg.program}"
                 osc.send_message("/patch/load", path)
+                loaded_fx = None    # patch load resets Surge FX; re-type on next FX CC
                 blog(f"{tag} -> {path.split(chr(92))[-1]}")
 
 

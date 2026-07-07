@@ -27,16 +27,27 @@ bool displayReady = false;
 bool displayDirty = true;
 unsigned long lastDisplayDraw = 0;
 
-// ---- Volume knob (pot on GP26): median + EMA + deadband -> 1..100, CC7 ----
+// ---- Knob FX (pot on GP26): the knob controls a selectable MIDI effect, NOT
+//   volume (volume is set on the host now). It always sends standard MIDI
+//   (CC or pitch bend) so it stays plug-and-play on any Mac/PC/synth. ----
 #define POT_PIN 26
-const byte VOLUME_CC = 7;
-byte volume = 100;                 // 1..100
-// Measured range of THIS pot (wired reversed): raw ~433 at max vol, ~1022 at min.
-// Bounds set just inside those so both ends clamp solidly to 100/0 despite the
-// flaky loud-end joint that makes the max reading wobble.
-const int POT_RAW_MIN = 510;       // raw at/below here = 100%  (loud end, wobbles 433-472)
-const int POT_RAW_MAX = 1000;      // raw at/above here = 0%    (quiet end, wobbles 1007-1022)
 const unsigned long POT_INTERVAL = 15;
+
+const byte FX_PITCH = 255;          // sentinel: use pitch bend instead of a CC
+struct KnobFx { const char* name; byte cc; byte neutral; };
+const KnobFx FX[8] = {
+  //  name       CC        neutral (value that = "effect off")
+  { "Filter",   74,       127 },    // CC74 cutoff (open)   [GM/MPE standard]
+  { "Reso",     71,       0   },    // CC71 resonance       [standard]
+  { "Pitch",    FX_PITCH, 64  },    // pitch bend (64=center)[universal]
+  { "Reverb",   91,       0   },    // CC91 reverb depth    [GM standard]
+  { "Chorus",   93,       0   },    // CC93 chorus depth    [GM standard]
+  { "Delay",    85,       0   },    // CC85 (mappable)
+  { "Phaser",   86,       0   },    // CC86 (mappable)
+  { "Drive",    87,       0   },    // CC87 (mappable)
+};
+byte knobFx = 0;                    // selected FX index (0..7)
+byte fxValue = 0;                   // current knob position for the FX (0..127)
 
 // ---- Note tracking (so we release exactly what's sounding; no 128-msg blast) ----
 bool noteActive[128] = {false};
@@ -173,12 +184,13 @@ Preset presets[4];
 
 // Flash storage (last 4KB of flash)
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-#define FLASH_MAGIC 0x4D494450  // bump when FlashData layout changes
+#define FLASH_MAGIC 0x4D494451  // bump when FlashData layout changes
 struct FlashData {
   uint32_t magic;
   Preset presets[4];
   uint8_t lastCat;    // remember the last-selected instrument across reboots
   uint8_t lastPatch;
+  uint8_t lastFx;     // remember the knob-FX choice
 };
 
 // Generative
@@ -221,6 +233,7 @@ void loadPresetsFromFlash() {
       curCat = flash_data->lastCat;
       curPatch = flash_data->lastPatch;
     }
+    if (flash_data->lastFx < 8) knobFx = flash_data->lastFx;   // restore knob-FX choice
   } else {
     // No valid data, use defaults
     presets[0] = {STYLE_SCALED, 0, 0, 0, -1, 100};
@@ -239,6 +252,7 @@ void writeFlash() {
   }
   data.lastCat = curCat;
   data.lastPatch = curPatch;
+  data.lastFx = knobFx;
 
   uint8_t buffer[FLASH_PAGE_SIZE];
   memcpy(buffer, &data, sizeof(FlashData));
@@ -354,15 +368,13 @@ void drawMain() {
     display.print(held);
   }
 
-  // Volume bar 0..100
+  // Knob-FX bar: shows which effect the knob controls + its amount (0..127)
   display.setTextSize(1);
   display.setCursor(0, 44);
-  display.print("Vol");
-  const int bx = 24, by = 43, bw = 74, bh = 11;
+  display.print(FX[knobFx].name);
+  const int bx = 46, by = 43, bw = 82, bh = 11;
   display.drawRect(bx, by, bw, bh, SSD1306_WHITE);
-  display.fillRect(bx + 1, by + 1, map(volume, 0, 100, 0, bw - 2), bh - 2, SSD1306_WHITE);
-  display.setCursor(bx + bw + 5, by + 2);
-  display.print(volume);
+  display.fillRect(bx + 1, by + 1, map(fxValue, 0, 127, 0, bw - 2), bh - 2, SSD1306_WHITE);
 
   display.display();
 }
@@ -408,6 +420,16 @@ int readPotFiltered() {
   for (int i = TRIM; i < N - TRIM; i++) sum += s[i];
   return (int)(sum / (N - 2 * TRIM));
 }
+// Send the selected knob-FX at value v (0..127) as standard MIDI.
+void sendFxValue(byte v) {
+  if (FX[knobFx].cc == FX_PITCH) {
+    int bend = map(v, 0, 127, -8192, 8191);   // 64 -> ~center
+    MIDI.sendPitchBend(bend, midiChannel);
+  } else {
+    MIDI.sendControlChange(FX[knobFx].cc, v, midiChannel);
+  }
+}
+
 void updatePot(unsigned long now) {
   static unsigned long last = 0, lastDecay = 0;
   static float ema = -1;
@@ -440,16 +462,14 @@ void updatePot(unsigned long now) {
     moving = true;
   }
 
-  int target = constrain(map(r, calLo + MRG, calHi - MRG, 100, 0), 0, 100);  // reversed
+  int target = constrain(map(r, calLo + MRG, calHi - MRG, 127, 0), 0, 127);  // reversed -> 0..127
   // Slew-rate limit: chase the target a few steps per cycle for a smooth ramp.
-  const int MAXSTEP = 7;
-  int d = target - (int)volume;
-  int v = (abs(d) > MAXSTEP) ? (int)volume + (d > 0 ? MAXSTEP : -MAXSTEP) : target;
-  if (v != (int)volume) {
-    volume = v;
-    int cc = map(volume, 0, 100, 0, 127);
-    MIDI.sendControlChange(VOLUME_CC, cc, midiChannel);   // melodic (Surge)
-    MIDI.sendControlChange(VOLUME_CC, cc, GM_DRUM_CH);    // drums (GM kit)
+  const int MAXSTEP = 9;
+  int d = target - (int)fxValue;
+  int v = (abs(d) > MAXSTEP) ? (int)fxValue + (d > 0 ? MAXSTEP : -MAXSTEP) : target;
+  if (v != (int)fxValue) {
+    fxValue = v;
+    sendFxValue(fxValue);          // send the selected FX (standard MIDI CC / bend)
     displayDirty = true;
   }
 
@@ -503,8 +523,6 @@ void selectInstrument(byte cat, byte patch) {
   displayDirty = true;
   drawMenuNow();                 // refresh selection marker before the preview delay
   delay(180);                    // let the patch load (bridge -> Surge)
-  // Loading a patch resets Surge's volume to full, so re-apply the knob level.
-  MIDI.sendControlChange(VOLUME_CC, map(volume, 0, 100, 0, 127), midiChannel);
   const byte prev[3] = {60, 64, 67};   // C E G
   for (byte i = 0; i < 3; i++) {
     noteOnT(prev[i], 105);
@@ -513,6 +531,36 @@ void selectInstrument(byte cat, byte patch) {
     delay(30);
   }
   writeFlash();   // remember this instrument across reboots/reconnects
+}
+
+// ---------------------------------------------------------------------------
+//  Knob-FX selection: choose which effect the knob controls. Resets the old
+//  effect to neutral, then previews the new one on the current instrument by
+//  holding a note and sweeping the effect so you hear what it does.
+// ---------------------------------------------------------------------------
+void selectFx(byte idx) {
+  sendFxValue(FX[knobFx].neutral);   // clear the OLD effect so it doesn't linger
+  knobFx = idx;
+  fxValue = FX[idx].neutral;
+  displayDirty = true;
+  drawMenuNow();
+  // Preview: hold a note and sweep the effect up then back to neutral.
+  noteOnT(60, 105);
+  byte lo = FX[idx].neutral, hi = (lo <= 64) ? 127 : 0;   // sweep toward the "on" extreme
+  for (int step = 0; step <= 20; step++) {
+    byte v = map(step, 0, 20, lo, hi);
+    sendFxValue(v);
+    delay(45);
+  }
+  delay(120);
+  for (int step = 0; step <= 12; step++) {                // ease back to neutral
+    byte v = map(step, 0, 12, hi, lo);
+    sendFxValue(v);
+    delay(25);
+  }
+  noteOffT(60);
+  fxValue = FX[idx].neutral;
+  writeFlash();   // remember the knob-FX choice across reboots
 }
 
 // ---------------------------------------------------------------------------
@@ -552,9 +600,13 @@ void drawMenu() {
     display.setCursor(0, 0); display.print("SCALES");
     for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, SCALE_NAMES[i], i == currentScale);
     footer = "1-8 pick  13<4>  16 exit";
-  } else {                          // CHORDS
+  } else if (currentPage == 4) {   // CHORDS
     display.setCursor(0, 0); display.print("CHORDS");
     for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, CHORD_NAMES[i], i == currentChordMode);
+    footer = "1-8 pick  13<4>  16 exit";
+  } else {                          // KNOB FX (what the knob controls)
+    display.setCursor(0, 0); display.print("KNOB FX");
+    for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, FX[i].name, i == knobFx);
     footer = "1-8 pick  13<4>  16 exit";
   }
   display.setCursor(0, 56);
@@ -595,9 +647,10 @@ void setup() {
     delay(100);
   }
 
-  // curCat/curPatch were restored from flash in loadPresetsFromFlash (default
-  // Keys/Grand Piano only if none saved yet). Open the menu on that category.
+  // curCat/curPatch/knobFx were restored from flash in loadPresetsFromFlash
+  // (defaults only if none saved yet). Open the menu on the current category.
   instCat = curCat;
+  fxValue = FX[knobFx].neutral;           // start the knob-FX at neutral
   programAnnounceAt = millis() + 4000;   // tell the host once it's listening
   displayDirty = true;
 }
@@ -725,8 +778,8 @@ void handlePadRelease(byte pad, unsigned long now) {
 
 void handleMenuPress(byte pad) {
   // Top row is the same on every page: 13=<prev  14=next>  15/16=EXIT.
-  if (pad == 12) { currentPage = (currentPage == 1) ? 4 : currentPage - 1; displayDirty = true; return; }
-  if (pad == 13) { currentPage = (currentPage == 4) ? 1 : currentPage + 1; displayDirty = true; return; }
+  if (pad == 12) { currentPage = (currentPage == 1) ? 5 : currentPage - 1; displayDirty = true; return; }
+  if (pad == 13) { currentPage = (currentPage == 5) ? 1 : currentPage + 1; displayDirty = true; return; }
   if (pad == 14 || pad == 15) { toggleMenu(); return; }  // exit from any page
 
   if (currentPage == 1) {          // INSTRUMENTS: 1-8 pick, 9/10 change category
@@ -739,6 +792,8 @@ void handleMenuPress(byte pad) {
     if (pad < 8) { currentScale = pad; playStyle = STYLE_SCALED; }
   } else if (currentPage == 4) {   // CHORDS
     if (pad < 8) { currentChordMode = pad; currentScale = CHORD_MODE_SCALES[pad]; playStyle = STYLE_CHORD; }
+  } else if (currentPage == 5) {   // KNOB FX
+    if (pad < 8) selectFx(pad);
   }
 
   displayDirty = true;
