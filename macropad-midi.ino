@@ -399,6 +399,9 @@ void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
   if (now - last < POT_INTERVAL) return;
+  // The OLED I2C write burst couples noise into the GP26 ADC. Don't sample the
+  // pot for a moment after a redraw, so playing notes can't nudge the volume.
+  if (now - lastDisplayDraw < 30) return;
   last = now;
   int raw = readPotFiltered();
   if (ema < 0) ema = raw;
@@ -415,8 +418,8 @@ void updatePot(unsigned long now) {
   if (abs(d) > MAXSTEP) {
     v = (int)volume + (d > 0 ? MAXSTEP : -MAXSTEP);   // in motion -> slew + commit
   } else {
-    // Near the target: ignore tiny +/-1-2 jitter; always snap to the exact ends.
-    bool bigEnough = abs(d) >= 3;
+    // Near the target: ignore jitter (incl. residual redraw noise); snap to ends.
+    bool bigEnough = abs(d) >= 4;
     bool hitEnd = (target == 0 || target == 100) && target != volume;
     if (!bigEnough && !hitEnd) return;
     v = target;
@@ -614,8 +617,8 @@ void loop() {
   updatePot(now);
   updateBeats(now);
 
-  // Redraw the screen when something changed (throttled).
-  if (displayDirty && now - lastDisplayDraw > 40) {
+  // Redraw the screen when something changed (throttled; slower = less ADC noise).
+  if (displayDirty && now - lastDisplayDraw > 70) {
     displayDirty = false;
     lastDisplayDraw = now;
     if (inMenu) drawMenu();
