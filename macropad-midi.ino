@@ -409,10 +409,10 @@ int readPotFiltered() {
   return (int)(sum / (N - 2 * TRIM));
 }
 void updatePot(unsigned long now) {
-  static unsigned long last = 0;
+  static unsigned long last = 0, lastDecay = 0;
   static float ema = -1;
-  static int restRaw = -1;      // raw value where the knob last settled
-  static int lastR = 0, stable = 0;
+  static int calLo = 1023, calHi = 0;    // auto-cal range (collapsed; sweep to set)
+  static int restRaw = -1, lastR = 0, stable = 0;
   static bool moving = false;
   if (now - last < POT_INTERVAL) return;
   // The OLED I2C write burst couples noise into the GP26 ADC. Don't sample the
@@ -424,16 +424,23 @@ void updatePot(unsigned long now) {
   ema += (raw - ema) * 0.20f;
   int r = (int)ema;
 
-  // Respond ONLY to a real turn: the reading must move past the noise floor from
-  // where it last settled. This makes note/chord/redraw/MIDI noise unable to
-  // move the volume -- it changes only when you actually turn the knob.
-  bool atEnd = (r <= POT_RAW_MIN || r >= POT_RAW_MAX);
+  // Auto-calibrate to the pot's REAL range (this pot drifts/isn't repeatable):
+  // expand to observed extremes, and slowly self-heal so a stale/bad reading
+  // fades out while active use keeps re-establishing the true ends.
+  if (r >= 20 && r <= 1010) { if (r < calLo) calLo = r; if (r > calHi) calHi = r; }
+  if (now - lastDecay > 80) { lastDecay = now; if (calHi - calLo > 320) { calLo++; calHi--; } }
+  if (calHi - calLo < 200) return;       // sweep the knob fully once to calibrate
+
+  const int MRG = 12;                     // end margin so the extremes clamp solidly
+  bool atEnd = (r <= calLo + MRG || r >= calHi - MRG);
+  // Respond ONLY to a real turn: ignore anything within the noise floor of the
+  // settled rest point, so playing notes/chords can't move the volume.
   if (!moving) {
-    if (abs(r - restRaw) < 18 && !atEnd) return;   // idle: ignore jitter
+    if (abs(r - restRaw) < 18 && !atEnd) return;
     moving = true;
   }
 
-  int target = constrain(map(r, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
+  int target = constrain(map(r, calLo + MRG, calHi - MRG, 100, 0), 0, 100);  // reversed
   // Slew-rate limit: chase the target a few steps per cycle for a smooth ramp.
   const int MAXSTEP = 7;
   int d = target - (int)volume;
