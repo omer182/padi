@@ -173,10 +173,12 @@ Preset presets[4];
 
 // Flash storage (last 4KB of flash)
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-#define FLASH_MAGIC 0x4D494449  // "MIDI" in hex
+#define FLASH_MAGIC 0x4D494450  // bump when FlashData layout changes
 struct FlashData {
   uint32_t magic;
   Preset presets[4];
+  uint8_t lastCat;    // remember the last-selected instrument across reboots
+  uint8_t lastPatch;
 };
 
 // Generative
@@ -214,6 +216,11 @@ void loadPresetsFromFlash() {
     for (int i = 0; i < 4; i++) {
       presets[i] = flash_data->presets[i];
     }
+    // Restore the last-selected instrument (clamp in case the catalog shrank).
+    if (flash_data->lastCat < CAT_COUNT && flash_data->lastPatch < CAT_SIZE) {
+      curCat = flash_data->lastCat;
+      curPatch = flash_data->lastPatch;
+    }
   } else {
     // No valid data, use defaults
     presets[0] = {STYLE_SCALED, 0, 0, 0, -1, 100};
@@ -223,22 +230,28 @@ void loadPresetsFromFlash() {
   }
 }
 
-void savePresetsToFlash() {
+// Write presets + last instrument to flash (quiet, no LED).
+void writeFlash() {
   FlashData data;
   data.magic = FLASH_MAGIC;
   for (int i = 0; i < 4; i++) {
     data.presets[i] = presets[i];
   }
-  
+  data.lastCat = curCat;
+  data.lastPatch = curPatch;
+
   uint8_t buffer[FLASH_PAGE_SIZE];
   memcpy(buffer, &data, sizeof(FlashData));
-  
+
   uint32_t ints = save_and_disable_interrupts();
   flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
   flash_range_program(FLASH_TARGET_OFFSET, buffer, FLASH_PAGE_SIZE);
   restore_interrupts(ints);
-  
-  // Flash LED to confirm
+}
+
+void savePresetsToFlash() {
+  writeFlash();
+  // Flash LED to confirm (explicit preset save only)
   for (int i = 0; i < 10; i++) {
     digitalWrite(LED_PIN, i % 2);
     delay(50);
@@ -484,6 +497,7 @@ void selectInstrument(byte cat, byte patch) {
     noteOffT(prev[i]);
     delay(30);
   }
+  writeFlash();   // remember this instrument across reboots/reconnects
 }
 
 // ---------------------------------------------------------------------------
@@ -566,7 +580,9 @@ void setup() {
     delay(100);
   }
 
-  curCat = 0; curPatch = 0; instCat = 0; // default: Keys / Grand Piano
+  // curCat/curPatch were restored from flash in loadPresetsFromFlash (default
+  // Keys/Grand Piano only if none saved yet). Open the menu on that category.
+  instCat = curCat;
   programAnnounceAt = millis() + 4000;   // tell the host once it's listening
   displayDirty = true;
 }
