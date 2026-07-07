@@ -395,9 +395,23 @@ int readPotFiltered() {
 void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
+  static int pend = -1, pendN = 0;
   if (now - last < POT_INTERVAL) return;
   last = now;
   int raw = readPotFiltered();
+
+  // Big instantaneous swings are almost always a loose-wire / open-circuit blip,
+  // not a real turn. Require such a jump to HOLD for a few reads before trusting
+  // it (a hand-turn is continuous and passes; a flick gets rejected).
+  int rawV = constrain(map(raw, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);
+  if (abs(rawV - (int)volume) >= 12) {
+    if (pend >= 0 && abs(rawV - pend) <= 4) pendN++;
+    else { pend = rawV; pendN = 1; }
+    if (pendN < 6) return;          // unconfirmed jump -> ignore this cycle
+  } else {
+    pend = -1; pendN = 0;
+  }
+
   if (ema < 0) ema = raw;
   ema += (raw - ema) * 0.20f;
   int v = constrain(map((int)ema, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
