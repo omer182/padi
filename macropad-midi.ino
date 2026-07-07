@@ -299,28 +299,68 @@ void initDisplay() {
   }
 }
 
-// Welcome animation: "Padi" slides in, then "by Rio".
+// Welcome animation: 4x4 pad grid ripples awake -> flash -> "PADI" zooms in
+// -> equalizer dances -> "by Rio". (1-bit, all drawn on the fly.)
 void bootSplash() {
   if (!displayReady) return;
   display.setTextColor(SSD1306_WHITE);
-  for (int x = -110; x <= 16; x += 11) {
+
+  // --- Phase 1: the 4x4 pads light up in a diagonal ripple ---
+  const int PW = 18, PH = 10, GAP = 4;
+  const int GX = (128 - (4 * PW + 3 * GAP)) / 2;   // centered grid
+  const int GY = (64  - (4 * PH + 3 * GAP)) / 2;
+  for (int step = 0; step <= 6; step++) {
+    display.clearDisplay();
+    for (int r = 0; r < 4; r++)
+      for (int c = 0; c < 4; c++) {
+        int x = GX + c * (PW + GAP), y = GY + r * (PH + GAP);
+        if (r + c <= step) display.fillRoundRect(x, y, PW, PH, 2, SSD1306_WHITE);
+        else               display.drawRoundRect(x, y, PW, PH, 2, SSD1306_WHITE);
+      }
+    display.display();
+    delay(65);
+  }
+  delay(120);
+  display.fillRect(0, 0, 128, 64, SSD1306_WHITE); display.display(); delay(55);  // flash
+
+  // --- Phase 2: "PADI" zooms in (size 1 -> 2 -> 3) ---
+  for (int s = 1; s <= 3; s++) {
+    display.clearDisplay();
+    display.setTextSize(s);
+    int w = 4 * 6 * s;
+    display.setCursor((128 - w) / 2, (24 - 8 * s) / 2 + 2);
+    display.print("PADI");
+    display.display();
+    delay(s < 3 ? 85 : 0);
+  }
+
+  // --- Phase 3: equalizer bars dance under the title ---
+  const int NB = 9, BW = 8, BGAP = 4, BASE = 55;
+  const int BX = (128 - (NB * BW + (NB - 1) * BGAP)) / 2;
+  for (int f = 0; f < 16; f++) {
     display.clearDisplay();
     display.setTextSize(3);
-    display.setCursor(x, 12);
-    display.print("Padi");
+    display.setCursor((128 - 72) / 2, 4);
+    display.print("PADI");
+    for (int i = 0; i < NB; i++) {
+      int h = 3 + (int)(15.0 * (0.5 + 0.5 * sin(i * 0.85 + f * 0.6)));
+      display.fillRect(BX + i * (BW + BGAP), BASE - h, BW, h, SSD1306_WHITE);
+    }
     display.display();
-    delay(20);
+    delay(45);
   }
-  for (int w = 0; w <= 96; w += 8) {          // underline sweep
-    display.drawFastHLine(16, 40, w, SSD1306_WHITE);
-    display.display();
-    delay(12);
-  }
+
+  // --- Phase 4: settle with "by Rio" ---
+  display.clearDisplay();
+  display.setTextSize(3);
+  display.setCursor((128 - 72) / 2, 8);
+  display.print("PADI");
   display.setTextSize(1);
-  display.setCursor(78, 50);
+  display.setCursor(92, 44);
   display.print("by Rio");
+  display.drawFastHLine(28, 38, 72, SSD1306_WHITE);
   display.display();
-  delay(1100);
+  delay(1000);
 }
 
 // Names of currently-held notes, e.g. "C E G".
