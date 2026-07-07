@@ -31,8 +31,11 @@ unsigned long lastDisplayDraw = 0;
 #define POT_PIN 26
 const byte VOLUME_CC = 7;
 byte volume = 100;                 // 1..100
-const int POT_RAW_MIN = 200;       // calibration (pot wired reversed)
-const int POT_RAW_MAX = 900;
+// Measured range of THIS pot (wired reversed): raw ~433 at max vol, ~1022 at min.
+// Bounds set just inside those so both ends clamp solidly to 100/0 despite the
+// flaky loud-end joint that makes the max reading wobble.
+const int POT_RAW_MIN = 510;       // raw at/below here = 100%  (loud end, wobbles 433-472)
+const int POT_RAW_MAX = 1000;      // raw at/above here = 0%    (quiet end, wobbles 1007-1022)
 const unsigned long POT_INTERVAL = 15;
 
 // ---- Note tracking (so we release exactly what's sounding; no 128-msg blast) ----
@@ -395,23 +398,13 @@ int readPotFiltered() {
 void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
-  static int calLo = 1023, calHi = 0;   // auto-calibration: observed raw extremes
   if (now - last < POT_INTERVAL) return;
   last = now;
   int raw = readPotFiltered();
   if (ema < 0) ema = raw;
   ema += (raw - ema) * 0.20f;
   int r = (int)ema;
-
-  // Auto-calibrate: learn the pot's true end-to-end range as you turn it, so the
-  // ends always reach 0 and 100 regardless of the pot's actual span. Ignore
-  // implausible rail readings (loose-wire opens) so they can't poison the range.
-  if (r >= 20 && r <= 1003) {
-    if (r < calLo) calLo = r;
-    if (r > calHi) calHi = r;
-  }
-  if (calHi - calLo < 80) return;       // sweep the knob fully once to calibrate
-  int target = constrain(map(r, calLo, calHi, 100, 0), 0, 100);  // reversed wiring
+  int target = constrain(map(r, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
 
   // Slew-rate limit: chase the target a few steps per cycle. A real turn tracks
   // smoothly (no pause); a momentary loose-wire blip can only nudge it MAXSTEP

@@ -37,7 +37,8 @@ def blog(msg):
         pass
 
 BASE = r"C:\Users\rio18\Tools\SurgeXT\Surge Synth Team\SurgeXTData"
-AZ = BASE + r"\patches_3rdparty\Aleksey Zhehanov"   # realistic acoustic GM set
+TP = BASE + r"\patches_3rdparty"                      # 3rd-party packs (the gems)
+AZ = TP + r"\Aleksey Zhehanov"                        # realistic acoustic GM set
 F  = BASE + r"\patches_factory"                       # synths / keys / pads
 
 # One representative patch per GM family (fallback for any unmapped program).
@@ -186,6 +187,27 @@ CATALOG = [
         F + r"\Polysynths\Jupiter-8", F + r"\Polysynths\Juno-60 Strings", F + r"\Polysynths\Korg Triton",
         F + r"\Polysynths\Fast Poly", F + r"\Polysynths\FM Poly", F + r"\Polysynths\Fat Curtis",
         F + r"\Polysynths\Ahh Polly", F + r"\Polysynths\Gentle",
+    ],
+    [  # 6 Arps (self-playing sequences)
+        F + r"\Sequences\Acid Seq 1", F + r"\Sequences\Octave Arp", F + r"\Sequences\Bell Seq",
+        F + r"\Sequences\Multi Seq", F + r"\Sequences\FM Seq", F + r"\Sequences\Game On 1",
+        F + r"\Sequences\Gate Chord", F + r"\Sequences\Fifth Seq",
+    ],
+    [  # 7 Space (atmospheres / cinematic)
+        TP + r"\Rare Earth\FX\Deep Note", F + r"\FX\Space Adventure 1", F + r"\FX\Space Cadet",
+        F + r"\FX\Aliens", F + r"\FX\XG Stardust", TP + r"\Luna\Atmospheres\Alias Glass Voice 1",
+        TP + r"\Luna\Atmospheres\Pretty Fifth", F + r"\FX\Vinyl",
+    ],
+    [  # 8 SynBass (boutique 3rd-party basses)
+        TP + r"\Luna\Basses\Chonky Analog Bass 1", TP + r"\Luna\Basses\Slap Bass", TP + r"\Luna\Basses\Synthwave",
+        TP + r"\Nick Moritz\Basses\Juno Fire", TP + r"\Nick Moritz\Basses\Hoover FM", TP + r"\Vincent Zauhar\Basses\Electro",
+        TP + r"\Databroth\Basses\Crystal Rip", TP + r"\Luna\Basses\Screamy Bass",
+    ],
+    [  # 9 Signat (showpiece keys/pads/leads)
+        TP + r"\Vincent Zauhar\Pads\Classic Warm Jupiters", TP + r"\Vincent Zauhar\Keys\Blue Lines, Red Lights 1",
+        TP + r"\Vincent Zauhar\Keys\So Appalled", TP + r"\Vincent Zauhar\Keys\Viva La Trance",
+        TP + r"\Vincent Zauhar\Pads\80s Brass", TP + r"\Argitoth\Leads\Trance Lead 1",
+        TP + r"\Argitoth\Pads\Blue Pad", TP + r"\Rare Earth\Plucks\Music Box",
     ],
 ]
 
