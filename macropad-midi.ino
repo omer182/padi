@@ -85,7 +85,16 @@ unsigned long lastStepTime = 0;
 const byte GM_DRUM_CH = 10;
 const byte KICK = 36, SNARE = 38, CHAT = 42, OHAT = 46;
 
-enum PlayStyle {STYLE_SCALED, STYLE_CHROMATIC, STYLE_CHORD, STYLE_GENERATIVE, STYLE_OMNI_CHORD};
+enum PlayStyle {STYLE_SCALED, STYLE_CHROMATIC, STYLE_CHORD, STYLE_GENERATIVE, STYLE_OMNI_CHORD, STYLE_DRUMS};
+
+// STYLE_DRUMS ("GarageBand/GM drum" mode): the 16 pads play 16 GM drum sounds
+// on the drum channel, so every pad hits a real drum in GarageBand / any GM host.
+const byte DRUM_NOTES[16] = {
+  36, 38, 42, 46,   // Kick, Snare, ClosedHat, OpenHat
+  39, 37, 44, 54,   // Clap, Rimshot, PedalHat, Tambourine
+  45, 47, 48, 50,   // LowTom, MidTom, HiMidTom, HighTom
+  49, 51, 56, 70    // Crash, Ride, Cowbell, Maracas
+};
 
 // 8 SCALES - Linear across 16 pads, no repeating notes
 const int8_t SCALES[][16] = {
@@ -334,6 +343,7 @@ void heldNotesStr(char* buf, int bufsz) {
 
 // Current scale/chord/mode name (for the main screen + menus).
 const char* modeName() {
+  if (playStyle == STYLE_DRUMS) return "Drums";
   if (playStyle == STYLE_CHORD || playStyle == STYLE_OMNI_CHORD) return CHORD_NAMES[currentChordMode];
   if (playStyle == STYLE_CHROMATIC) return "Chromatic";
   return SCALE_NAMES[currentScale];
@@ -590,10 +600,11 @@ void drawMenu() {
     display.setCursor(0, 0); display.print("BEATS");
     for (byte i = 0; i < BEAT_COUNT; i++) drawMenuItem(i, i + 1, BEATS[i].name, i == currentBeat);
     footer = "1-N beat  13<4>  16 exit";
-  } else if (currentPage == 3) {   // SCALES
-    display.setCursor(0, 0); display.print("SCALES");
-    for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, SCALE_NAMES[i], i == currentScale);
-    footer = "1-8 pick  13<4>  16 exit";
+  } else if (currentPage == 3) {   // SCALES (+ Drums mode on pad 9)
+    display.setCursor(0, 0); display.print(playStyle == STYLE_DRUMS ? "SCALES  *DRUMS*" : "SCALES");
+    for (byte i = 0; i < 8; i++)
+      drawMenuItem(i, i + 1, SCALE_NAMES[i], playStyle != STYLE_DRUMS && i == currentScale);
+    footer = "1-8 scale  9 Drums";
   } else if (currentPage == 4) {   // CHORDS
     display.setCursor(0, 0); display.print("CHORDS");
     for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, CHORD_NAMES[i], i == currentChordMode);
@@ -784,6 +795,7 @@ void handleMenuPress(byte pad) {
     if (pad < BEAT_COUNT) beatSelect(pad);
   } else if (currentPage == 3) {   // SCALES
     if (pad < 8) { currentScale = pad; playStyle = STYLE_SCALED; }
+    else if (pad == 8) playStyle = STYLE_DRUMS;   // pad 9 = GM drum-kit mode
   } else if (currentPage == 4) {   // CHORDS
     if (pad < 8) { currentChordMode = pad; currentScale = CHORD_MODE_SCALES[pad]; playStyle = STYLE_CHORD; }
   } else if (currentPage == 5) {   // KNOB FX
@@ -820,6 +832,14 @@ void playNote(byte pad, bool noteOn) {
       
     case STYLE_OMNI_CHORD:
       playOmniChord(pad, noteOn);
+      break;
+
+    case STYLE_DRUMS:
+      {
+        byte note = DRUM_NOTES[pad];   // each pad = a GM drum sound
+        if (noteOn) MIDI.sendNoteOn(note, velocity, GM_DRUM_CH);
+        else        MIDI.sendNoteOff(note, 0, GM_DRUM_CH);
+      }
       break;
   }
 }
