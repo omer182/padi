@@ -301,6 +301,9 @@ def run_bridge():
 
     print(f"Bridge running. Owning '{port}', forwarding to Surge via OSC {OSC_HOST}:{OSC_PORT}.")
     all_notes_off(osc)  # clean slate on startup
+    # The knob no longer controls volume, so keep Surge's master at full and let
+    # the user set level on the PC. (Also re-applied after every patch load.)
+    osc.send_message("/param/global/volume", 1.0)
     pending_bank = None  # last Bank Select (CC0) = catalog category
     loaded_fx = None     # FX type currently in insert slot a/1 (0 = off)
 
@@ -350,6 +353,7 @@ def run_bridge():
                 else:
                     tag = f"cat {pending_bank}/{msg.program}"
                 osc.send_message("/patch/load", path)
+                osc.send_message("/param/global/volume", 1.0)  # keep master up (knob != volume now)
                 loaded_fx = None    # patch load resets Surge FX; re-type on next FX CC
                 blog(f"{tag} -> {path.split(chr(92))[-1]}")
 

@@ -32,6 +32,8 @@ unsigned long lastDisplayDraw = 0;
 //   (CC or pitch bend) so it stays plug-and-play on any Mac/PC/synth. ----
 #define POT_PIN 26
 const unsigned long POT_INTERVAL = 15;
+const int POT_RAW_LO = 470;        // raw at/below here = 127 (this pot: ~433 max end)
+const int POT_RAW_HI = 1010;       // raw at/above here = 0   (this pot: ~1022 min end)
 
 const byte FX_PITCH = 255;          // sentinel: use pitch bend instead of a CC
 struct KnobFx { const char* name; byte cc; byte neutral; };
@@ -431,52 +433,44 @@ void sendFxValue(byte v) {
 }
 
 void updatePot(unsigned long now) {
-  static unsigned long last = 0, lastDecay = 0;
+  static unsigned long last = 0;
   static float ema = -1;
-  static int calLo = 1023, calHi = 0;    // auto-cal range (collapsed; sweep to set)
-  static int restRaw = -1, lastR = 0, stable = 0;
+  static int restVal = -1, lastVal = 0, stable = 0;
   static bool moving = false;
   if (now - last < POT_INTERVAL) return;
   // The OLED I2C write burst couples noise into the GP26 ADC. Don't sample the
-  // pot for a moment after a redraw, so playing notes can't nudge the volume.
+  // pot right after a redraw, so playing notes can't nudge the FX.
   if (now - lastDisplayDraw < 30) return;
   last = now;
   int raw = readPotFiltered();
-  if (ema < 0) { ema = raw; restRaw = raw; lastR = raw; }
-  ema += (raw - ema) * 0.20f;
+  if (ema < 0) ema = raw;
+  ema += (raw - ema) * 0.15f;                              // heavy smoothing
   int r = (int)ema;
 
-  // Auto-calibrate to the pot's REAL range (this pot drifts/isn't repeatable):
-  // expand to observed extremes, and slowly self-heal so a stale/bad reading
-  // fades out while active use keeps re-establishing the true ends.
-  if (r >= 20 && r <= 1010) { if (r < calLo) calLo = r; if (r > calHi) calHi = r; }
-  if (now - lastDecay > 80) { lastDecay = now; if (calHi - calLo > 320) { calLo++; calHi--; } }
-  if (calHi - calLo < 200) return;       // sweep the knob fully once to calibrate
+  // Fixed generous mapping to 0..127 (pot reversed; ends clamp). No auto-cal:
+  // the flaky pot drifts, but the rest-latch below keeps the FX still at rest.
+  int val = constrain(map(r, POT_RAW_LO, POT_RAW_HI, 127, 0), 0, 127);
 
-  const int MRG = 12;                     // end margin so the extremes clamp solidly
-  bool atEnd = (r <= calLo + MRG || r >= calHi - MRG);
-  // Respond ONLY to a real turn: ignore anything within the noise floor of the
-  // settled rest point, so playing notes/chords can't move the volume.
+  // Rest-latch: hold the FX steady unless the knob makes a REAL move well past
+  // the pot's noise floor. This is what stops the "jittering all over".
+  if (restVal < 0) { restVal = val; lastVal = val; }
   if (!moving) {
-    if (abs(r - restRaw) < 18 && !atEnd) return;
+    if (abs(val - restVal) < 10) return;   // idle: ignore drift/jitter
     moving = true;
   }
-
-  int target = constrain(map(r, calLo + MRG, calHi - MRG, 127, 0), 0, 127);  // reversed -> 0..127
-  // Slew-rate limit: chase the target a few steps per cycle for a smooth ramp.
+  // Track smoothly while turning.
   const int MAXSTEP = 9;
-  int d = target - (int)fxValue;
-  int v = (abs(d) > MAXSTEP) ? (int)fxValue + (d > 0 ? MAXSTEP : -MAXSTEP) : target;
+  int d = val - (int)fxValue;
+  int v = (abs(d) > MAXSTEP) ? (int)fxValue + (d > 0 ? MAXSTEP : -MAXSTEP) : val;
   if (v != (int)fxValue) {
     fxValue = v;
-    sendFxValue(fxValue);          // send the selected FX (standard MIDI CC / bend)
+    sendFxValue(fxValue);          // standard MIDI CC / pitch bend
     displayDirty = true;
   }
-
-  // Once the knob stops moving, latch the new rest point and go back to idle.
-  if (abs(r - lastR) <= 2) stable++; else stable = 0;
-  lastR = r;
-  if (stable >= 8 && !atEnd) { moving = false; restRaw = r; stable = 0; }
+  // Once the knob settles, latch the new rest point and go idle again.
+  if (abs(val - lastVal) <= 1) stable++; else stable = 0;
+  lastVal = val;
+  if (stable >= 10) { moving = false; restVal = val; stable = 0; }
 }
 
 // ---------------------------------------------------------------------------
