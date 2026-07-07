@@ -376,8 +376,11 @@ void allNotesOff() {
 // ---------------------------------------------------------------------------
 //  Volume knob: median (spike-proof) + EMA (smooth) + 1-step deadband
 // ---------------------------------------------------------------------------
-int readPotMedian() {
-  const int N = 9;
+int readPotFiltered() {
+  // Trimmed mean: oversample, sort, drop the outliers, average the middle.
+  // The averaging (not median) is what tames the RP2040 ADC DNL glitch that
+  // makes a still pot toggle between two codes; the trim kills touch spikes.
+  const int N = 25, TRIM = 6;
   int s[N];
   for (int i = 0; i < N; i++) s[i] = analogRead(POT_PIN);
   for (int i = 1; i < N; i++) {           // insertion sort
@@ -385,16 +388,18 @@ int readPotMedian() {
     while (j >= 0 && s[j] > k) { s[j + 1] = s[j]; j--; }
     s[j + 1] = k;
   }
-  return s[N / 2];
+  long sum = 0;
+  for (int i = TRIM; i < N - TRIM; i++) sum += s[i];
+  return (int)(sum / (N - 2 * TRIM));
 }
 void updatePot(unsigned long now) {
   static unsigned long last = 0;
   static float ema = -1;
   if (now - last < POT_INTERVAL) return;
   last = now;
-  int raw = readPotMedian();
+  int raw = readPotFiltered();
   if (ema < 0) ema = raw;
-  ema += (raw - ema) * 0.25f;
+  ema += (raw - ema) * 0.20f;
   int v = constrain(map((int)ema, POT_RAW_MIN, POT_RAW_MAX, 100, 0), 0, 100);  // reversed
   // Ignore tiny +/-1-2 jitter, but always allow snapping to the exact ends.
   bool bigEnough = abs(v - (int)volume) >= 3;
