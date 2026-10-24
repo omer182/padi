@@ -70,28 +70,43 @@ fn find_port() -> Option<String> {
 }
 
 fn watch(hub: Arc<Hub>, midi: Arc<MidiLink>, link: Arc<DeviceLink>) {
+    let mut last_error = String::new();
     loop {
         if link.is_paused() {
             thread::sleep(Duration::from_millis(500));
             continue;
         }
         if let Some(name) = find_port() {
-            if let Err(e) = session(&hub, &link, &name) {
-                hub.log(format!("Pad serial {name}: {e}"));
-            }
+            let mut connected = false;
+            let result = session(&hub, &link, &name, &mut connected);
             *link.writer.lock().unwrap() = None;
-            hub.update(|s| {
-                s.pico_serial = false;
-                s.device.clear();
-            });
-            // A dropped serial link usually means the pad reset; reopen MIDI too.
-            midi.force_reconnect.store(true, Ordering::Relaxed);
+            match result {
+                Err(e) if e != last_error => {
+                    hub.log(if connected {
+                        format!("Pad serial {name}: {e}")
+                    } else {
+                        format!("Pad serial {name}: {e} (if this repeats, unplug and replug the pad)")
+                    });
+                    last_error = e;
+                }
+                _ => {}
+            }
+            if connected {
+                last_error.clear();
+                hub.update(|s| {
+                    s.pico_serial = false;
+                    s.device.clear();
+                });
+                // A link that was up and dropped usually means the pad reset:
+                // reopen MIDI too. (Failing to open at all says nothing about MIDI.)
+                midi.force_reconnect.store(true, Ordering::Relaxed);
+            }
         }
         thread::sleep(Duration::from_millis(1500));
     }
 }
 
-fn session(hub: &Hub, link: &DeviceLink, name: &str) -> Result<(), String> {
+fn session(hub: &Hub, link: &DeviceLink, name: &str, connected: &mut bool) -> Result<(), String> {
     // Never 1200 baud: that's arduino-pico's "reset into bootloader" signal.
     let mut port = serialport::new(name, 115_200)
         .timeout(Duration::from_millis(200))
@@ -101,6 +116,7 @@ fn session(hub: &Hub, link: &DeviceLink, name: &str) -> Result<(), String> {
     port.write_data_terminal_ready(true).map_err(|e| e.to_string())?;
     let _ = port.write_all(b"?\n");
     *link.writer.lock().unwrap() = port.try_clone().ok();
+    *connected = true;
     hub.update(|s| s.pico_serial = true);
     hub.log(format!("Pad serial connected on {name}"));
 
@@ -132,6 +148,9 @@ fn handle_line(hub: &Hub, line: &str) {
             let down = parts.next() == Some("1");
             if let Some(pad) = pad.filter(|p| *p < 16) {
                 hub.emit("pad", PadEvent { pad, down });
+                if let Some(studio) = crate::studio::get() {
+                    studio.pad_input(pad, down, 100, crate::studio::Source::Serial);
+                }
             }
         }
         Some("S") => {

@@ -18,9 +18,14 @@ pub struct EngineStatus {
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Sound {
+    pub font: usize,
     pub bank: i32,
     pub program: i32,
     pub name: String,
+    /// Sound-editor settings in effect.
+    pub params: crate::engine::SoundParams,
+    /// Set when this is one of your saved sounds (My kits > My sounds).
+    pub my_sound: Option<String>,
 }
 
 #[derive(Clone, Serialize, Default)]

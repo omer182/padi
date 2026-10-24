@@ -1,7 +1,7 @@
 // Pad MIDI link: finds "Macro MIDI Pad", plays everything it sends through the
 // built-in engine, and mirrors the traffic to the UI. Reconnects on replug.
 // (Windows MIDI is single-client: while the app holds the pad, a DAW can't.)
-use crate::engine::{Cmd, Engine};
+use crate::engine::{Cmd, Engine, SoundParams};
 use crate::hub::{Hub, Sound};
 use crate::sounds;
 use midir::{Ignore, MidiInput, MidiInputConnection};
@@ -14,6 +14,7 @@ use std::time::Duration;
 
 pub const PAD_PORT_MATCH: &str = "Macro MIDI Pad";
 const DRUM_CH: u8 = 9;
+const SAMPLER_CH: u8 = 15;
 
 #[derive(Clone, Serialize)]
 pub struct MidiEvent {
@@ -41,11 +42,17 @@ impl MidiLink {
     }
 }
 
-/// Program the engine for a sound and tell the UI.
-pub fn set_sound(hub: &Hub, engine: &Engine, ch: u8, bank: i32, program: i32) {
-    engine.send(Cmd::Program { ch, bank, program });
-    let name = engine.preset_name(bank, program);
-    let sound = Some(Sound { bank, program, name });
+/// Program the engine for a stock sound (default settings) and tell the UI.
+pub fn set_sound(hub: &Hub, engine: &Engine, ch: u8, font: usize, bank: i32, program: i32) {
+    let name = engine.preset_name(font, bank, program);
+    apply_sound(hub, engine, ch, Sound { font, bank, program, name, params: SoundParams::default(), my_sound: None });
+}
+
+/// Program the engine for any sound (stock or one of yours) and tell the UI.
+pub fn apply_sound(hub: &Hub, engine: &Engine, ch: u8, sound: Sound) {
+    engine.send(Cmd::Program { ch, font: sound.font, bank: sound.bank, program: sound.program });
+    engine.send(Cmd::Params(ch, sound.params));
+    let sound = Some(sound);
     hub.update(|s| if ch == DRUM_CH { s.drum_kit = sound } else { s.sound = sound });
 }
 
@@ -113,6 +120,14 @@ impl Router {
         let ch = status & 0x0F;
         let d1 = msg.get(1).copied().unwrap_or(0);
         let d2 = msg.get(2).copied().unwrap_or(0);
+        // Sampler mode: pads send notes 36..51 on channel 16 for the kit.
+        if ch == SAMPLER_CH && (0x80..=0x9F).contains(&status) && (36..52).contains(&d1) {
+            let down = status & 0xF0 == 0x90 && d2 > 0;
+            if let Some(studio) = crate::studio::get() {
+                studio.pad_input(d1 - 36, down, d2, crate::studio::Source::Midi);
+            }
+            return;
+        }
         match status & 0xF0 {
             0x90 if d2 > 0 => {
                 self.engine.send(Cmd::Midi(status, d1, d2));
@@ -164,7 +179,7 @@ impl Router {
             }
             None => p,
         };
-        set_sound(&self.hub, &self.engine, ch, 0, program as i32);
+        set_sound(&self.hub, &self.engine, ch, 0, 0, program as i32);
         self.emit("pc", ch, program as i32, 0);
     }
 

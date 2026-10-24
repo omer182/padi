@@ -16,8 +16,8 @@
         "title": "PADI",
         "width": 1100,
         "height": 760,
-        "minWidth": 820,
-        "minHeight": 600,
+        "minWidth": 900,
+        "minHeight": 640,
         "visible": false
       }
     ],
@@ -36,7 +36,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "resources/*"
+      "resources/**/*"
     ]
   }
 }

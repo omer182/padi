@@ -6,8 +6,8 @@ export type DeviceState = Record<string, number>;
 export const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 export const noteName = (n: number) => `${NOTE_NAMES[n % 12]}${Math.floor(n / 12) - 1}`;
 
-export enum Style { Scaled, Chromatic, Chord, Generative, Omni, Drums }
-export const STYLE_NAMES = ["Scale", "Chromatic", "Chords", "Generative", "Strum", "Drums"];
+export enum Style { Scaled, Chromatic, Chord, Generative, Omni, Drums, Sampler }
+export const STYLE_NAMES = ["Scale", "Chromatic", "Chords", "Generative", "Strum", "Drums", "Sampler"];
 
 export const SCALE_NAMES = ["Major", "Minor", "Blues", "Harmonic", "Pent Maj", "Pent Min", "Lydian", "Chromatic"];
 const SCALES = [
@@ -121,8 +121,9 @@ function menuLabel(s: DeviceState, pad: number): PadLabel {
   } else if (page === 2) {
     if (pad < BEAT_NAMES.length) return item(BEAT_NAMES[pad], pad === s.bt);
   } else if (page === 3) {
-    if (pad < 8) return item(SCALE_NAMES[pad], s.st !== Style.Drums && pad === s.sc);
+    if (pad < 8) return item(SCALE_NAMES[pad], s.st !== Style.Drums && s.st !== Style.Sampler && pad === s.sc);
     if (pad === 8) return item("Drums", s.st === Style.Drums);
+    if (pad === 9) return item("Sampler", s.st === Style.Sampler);
   } else if (page === 4) {
     if (pad < 8) return item(CHORD_NAMES[pad], pad === s.cm);
   } else if (pad < 8) {
@@ -135,6 +136,7 @@ export const MENU_PAGES = ["", "Instruments", "Beats", "Scales", "Chords", "Knob
 
 export function modeName(s: DeviceState): string {
   if (s.st === Style.Drums) return "Drums";
+  if (s.st === Style.Sampler) return "Sampler";
   if (s.st === Style.Chord || s.st === Style.Omni) return `${STYLE_NAMES[s.st]} · ${CHORD_NAMES[s.cm]}`;
   if (s.st === Style.Chromatic) return "Chromatic";
   return `${STYLE_NAMES[s.st]} · ${SCALE_NAMES[s.sc]}`;

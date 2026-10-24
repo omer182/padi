@@ -85,7 +85,12 @@ unsigned long lastStepTime = 0;
 const byte GM_DRUM_CH = 10;
 const byte KICK = 36, SNARE = 38, CHAT = 42, OHAT = 46;
 
-enum PlayStyle {STYLE_SCALED, STYLE_CHROMATIC, STYLE_CHORD, STYLE_GENERATIVE, STYLE_OMNI_CHORD, STYLE_DRUMS};
+enum PlayStyle {STYLE_SCALED, STYLE_CHROMATIC, STYLE_CHORD, STYLE_GENERATIVE, STYLE_OMNI_CHORD, STYLE_DRUMS, STYLE_SAMPLER};
+
+// STYLE_SAMPLER: each pad sends its own note (36 + pad) on channel 16, like a
+// standard pad controller. The PADI app plays your recorded samples on them.
+const byte SAMPLER_CH = 16;
+const byte SAMPLER_BASE_NOTE = 36;
 
 // STYLE_DRUMS ("GarageBand/GM drum" mode): the 16 pads play 16 GM drum sounds
 // on the drum channel, so every pad hits a real drum in GarageBand / any GM host.
@@ -384,6 +389,7 @@ void heldNotesStr(char* buf, int bufsz) {
 // Current scale/chord/mode name (for the main screen + menus).
 const char* modeName() {
   if (playStyle == STYLE_DRUMS) return "Drums";
+  if (playStyle == STYLE_SAMPLER) return "Sampler";
   if (playStyle == STYLE_CHORD || playStyle == STYLE_OMNI_CHORD) return CHORD_NAMES[currentChordMode];
   if (playStyle == STYLE_CHROMATIC) return "Chromatic";
   return SCALE_NAMES[currentScale];
@@ -641,10 +647,12 @@ void drawMenu() {
     for (byte i = 0; i < BEAT_COUNT; i++) drawMenuItem(i, i + 1, BEATS[i].name, i == currentBeat);
     footer = "1-N beat  13<4>  16 exit";
   } else if (currentPage == 3) {   // SCALES (+ Drums mode on pad 9)
-    display.setCursor(0, 0); display.print(playStyle == STYLE_DRUMS ? "SCALES  *DRUMS*" : "SCALES");
+    display.setCursor(0, 0);
+    display.print(playStyle == STYLE_DRUMS ? "SCALES  *DRUMS*" : playStyle == STYLE_SAMPLER ? "SCALES  *SAMPLER*" : "SCALES");
+    bool scaled = playStyle != STYLE_DRUMS && playStyle != STYLE_SAMPLER;
     for (byte i = 0; i < 8; i++)
-      drawMenuItem(i, i + 1, SCALE_NAMES[i], playStyle != STYLE_DRUMS && i == currentScale);
-    footer = "1-8 scale  9 Drums";
+      drawMenuItem(i, i + 1, SCALE_NAMES[i], scaled && i == currentScale);
+    footer = "9 Drums  10 Sampler";
   } else if (currentPage == 4) {   // CHORDS
     display.setCursor(0, 0); display.print("CHORDS");
     for (byte i = 0; i < 8; i++) drawMenuItem(i, i + 1, CHORD_NAMES[i], i == currentChordMode);
@@ -672,7 +680,7 @@ void drawMenuNow() {
 //    S k=v ...         state snapshot, sent whenever it changes (or on "?")
 //  Host -> pad, one command per line:
 //    ?                 resend the state snapshot
-//    st <n>            set play style (0 scale, 1 chromatic, 2 chord, 4 strum, 5 drums)
+//    st <n>            set play style (0 scale, 1 chromatic, 2 chord, 4 strum, 5 drums, 6 sampler)
 //  Only written while the host has the port open, so it never blocks.
 // ---------------------------------------------------------------------------
 bool hostAsked = false;
@@ -682,7 +690,7 @@ void hostCommand(char* line) {
   char key[8];
   int val;
   if (sscanf(line, "%7s %d", key, &val) != 2) return;
-  if (strcmp(key, "st") == 0 && val >= STYLE_SCALED && val <= STYLE_DRUMS && val != STYLE_GENERATIVE) {
+  if (strcmp(key, "st") == 0 && val >= STYLE_SCALED && val <= STYLE_SAMPLER && val != STYLE_GENERATIVE) {
     allNotesOff();
     playStyle = (PlayStyle)val;
     displayDirty = true;
@@ -702,11 +710,20 @@ void hostRead() {
   }
 }
 
+// Never block: if the host stopped reading (app killed with the port still
+// "open"), a blocking write would freeze the whole pad. Drop the line instead.
+bool hostWrite(const char* line) {
+  size_t len = strlen(line) + 2;
+  if (!Serial || Serial.availableForWrite() < (int)len) return false;
+  Serial.write(line);
+  Serial.write("\r\n");
+  return true;
+}
+
 void hostPad(byte pad, bool down) {
-  if (!Serial) return;
-  Serial.print("P ");
-  Serial.print(pad);
-  Serial.println(down ? " 1" : " 0");
+  char buf[12];
+  snprintf(buf, sizeof(buf), "P %d %d", pad, down ? 1 : 0);
+  hostWrite(buf);
 }
 
 void hostState(unsigned long now) {
@@ -723,8 +740,7 @@ void hostState(unsigned long now) {
            (int)playStyle, currentScale, currentChordMode, instCat, curCat, curPatch, knobFx, fxValue,
            currentBeat, inMenu ? 1 : 0, currentPage, transpose, octave, velocity, midiChannel, rootNote);
   if (!asked && strcmp(buf, sent) == 0) return;
-  strcpy(sent, buf);
-  Serial.println(buf);
+  if (hostWrite(buf)) strcpy(sent, buf);   // not sent = retry next time
 }
 
 void setup() {
@@ -899,7 +915,8 @@ void handleMenuPress(byte pad) {
     if (pad < BEAT_COUNT) beatSelect(pad);
   } else if (currentPage == 3) {   // SCALES
     if (pad < 8) { currentScale = pad; playStyle = STYLE_SCALED; }
-    else if (pad == 8) playStyle = STYLE_DRUMS;   // pad 9 = GM drum-kit mode
+    else if (pad == 8) playStyle = STYLE_DRUMS;     // pad 9 = GM drum-kit mode
+    else if (pad == 9) playStyle = STYLE_SAMPLER;   // pad 10 = PADI sampler kit
   } else if (currentPage == 4) {   // CHORDS
     if (pad < 8) { currentChordMode = pad; currentScale = CHORD_MODE_SCALES[pad]; playStyle = STYLE_CHORD; }
   } else if (currentPage == 5) {   // KNOB FX
@@ -944,6 +961,11 @@ void playNote(byte pad, bool noteOn) {
         if (noteOn) MIDI.sendNoteOn(note, velocity, GM_DRUM_CH);
         else        MIDI.sendNoteOff(note, 0, GM_DRUM_CH);
       }
+      break;
+
+    case STYLE_SAMPLER:
+      if (noteOn) MIDI.sendNoteOn(SAMPLER_BASE_NOTE + pad, velocity, SAMPLER_CH);
+      else        MIDI.sendNoteOff(SAMPLER_BASE_NOTE + pad, 0, SAMPLER_CH);
       break;
   }
 }
