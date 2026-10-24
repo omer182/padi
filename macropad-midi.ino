@@ -666,9 +666,71 @@ void drawMenuNow() {
   drawMenu();
 }
 
+// ---------------------------------------------------------------------------
+//  Host telemetry over USB serial (COM3) for the PADI desktop app:
+//    P <pad> <1|0>     pad pressed / released
+//    S k=v ...         state snapshot, sent whenever it changes (or on "?")
+//  Host -> pad, one command per line:
+//    ?                 resend the state snapshot
+//    st <n>            set play style (0 scale, 1 chromatic, 2 chord, 4 strum, 5 drums)
+//  Only written while the host has the port open, so it never blocks.
+// ---------------------------------------------------------------------------
+bool hostAsked = false;
+
+void hostCommand(char* line) {
+  if (line[0] == '?') { hostAsked = true; return; }
+  char key[8];
+  int val;
+  if (sscanf(line, "%7s %d", key, &val) != 2) return;
+  if (strcmp(key, "st") == 0 && val >= STYLE_SCALED && val <= STYLE_DRUMS && val != STYLE_GENERATIVE) {
+    allNotesOff();
+    playStyle = (PlayStyle)val;
+    displayDirty = true;
+  }
+}
+
+void hostRead() {
+  static char buf[32];
+  static byte len = 0;
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r') {
+      if (len) { buf[len] = 0; hostCommand(buf); len = 0; }
+    } else if (len < sizeof(buf) - 1) {
+      buf[len++] = c;
+    }
+  }
+}
+
+void hostPad(byte pad, bool down) {
+  if (!Serial) return;
+  Serial.print("P ");
+  Serial.print(pad);
+  Serial.println(down ? " 1" : " 0");
+}
+
+void hostState(unsigned long now) {
+  static unsigned long last = 0;
+  static char sent[160] = "";
+  hostRead();
+  bool asked = hostAsked;
+  hostAsked = false;
+  if (!Serial || (!asked && now - last < 40)) return;
+  last = now;
+  char buf[160];
+  snprintf(buf, sizeof(buf),
+           "S st=%d sc=%d cm=%d ic=%d cat=%d pa=%d fx=%d fv=%d bt=%d mn=%d pg=%d tr=%d oc=%d ve=%d ch=%d rt=%d",
+           (int)playStyle, currentScale, currentChordMode, instCat, curCat, curPatch, knobFx, fxValue,
+           currentBeat, inMenu ? 1 : 0, currentPage, transpose, octave, velocity, midiChannel, rootNote);
+  if (!asked && strcmp(buf, sent) == 0) return;
+  strcpy(sent, buf);
+  Serial.println(buf);
+}
+
 void setup() {
   usb_midi.setStringDescriptor("Macro MIDI Pad");
   MIDI.begin(MIDI_CHANNEL_OMNI);
+  Serial.begin(115200);
 
   pinMode(LED_PIN, OUTPUT);
   for (int i = 0; i < 16; i++) {
@@ -717,7 +779,8 @@ void loop() {
     if ((now - lastDebounceTime[i]) > DEBOUNCE_DELAY) {
       if (reading != padStates[i]) {
         padStates[i] = reading;
-        
+        hostPad(i, padStates[i]);
+
         if (padStates[i]) {
           padHoldStartTime[i] = now;
           handlePadPress(i, now);
@@ -745,6 +808,7 @@ void loop() {
   
   updatePot(now);
   updateBeats(now);
+  hostState(now);
 
   // Redraw the screen when something changed (throttled; slower = less ADC noise).
   if (displayDirty && now - lastDisplayDraw > 70) {
