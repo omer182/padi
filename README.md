@@ -6,7 +6,7 @@
 
 **A 16-key MIDI pad you build yourself, plus a desktop app that turns it into an instrument, sampler and looper.**
 
-Raspberry Pi Pico · 0.96" OLED · one knob · 3D-printed case · Windows app (Tauri + Rust)
+Raspberry Pi Pico · 0.96" OLED · one knob · 3D-printed case · Windows & macOS app (Tauri + Rust)
 
 [**Download**](https://github.com/omer182/padi/releases/latest) · [Build it](#1-build-the-pad) · [Flash it](#2-flash-the-firmware) · [Install the app](#3-install-the-app) · [Play](#4-play)
 
@@ -123,16 +123,22 @@ The `usbstack=tinyusb` option is required (it's what makes the Pico a USB MIDI d
 
 ## 3. Install the app
 
-1. Download **`PADI_x64-setup.exe`** from the [latest release](https://github.com/omer182/padi/releases/latest) and run it.
-2. Windows may show *"Windows protected your PC"* because the app isn't code-signed yet. Click **More info › Run anyway**.
-3. Open **PADI** and plug in the pad. The three dots at the top turn green:
+Download from the [latest release](https://github.com/omer182/padi/releases/latest):
+
+| | Windows | macOS (Apple Silicon + Intel) |
+|---|---|---|
+| File | **`PADI_x64-setup.exe`** | **`PADI_macOS_universal.dmg`** |
+| Install | Run it. If you see *"Windows protected your PC"*, click **More info › Run anyway** (the app isn't code-signed yet). | Open the .dmg and drag **PADI** into **Applications**. |
+| First launch | Start menu › PADI | **Right-click PADI › Open › Open** (it isn't notarized yet, so a normal double-click is blocked the first time). If macOS says the app is *damaged*, run `xattr -cr /Applications/PADI.app` in Terminal once. Allow the **microphone** when asked (for recording). |
+
+Open **PADI** and plug in the pad. The three dots at the top turn green:
    - **Pad**: the MIDI link
    - **Live view**: the pad's state and presses
    - **Sound**: your speakers or headphones
 
-PADI keeps running in the tray when you close the window. To start it with Windows, use *⋯ › Start with Windows*.
+PADI keeps running in the tray (menu bar on Mac) when you close the window. To start it at login, use *⋯ › Start with Windows*.
 
-> **macOS / Linux:** the app is built with cross-platform parts (Tauri, cpal, midir), but only Windows has been tested so far. You can [build it from source](#build-the-app-from-source).
+> **macOS** builds come from GitHub Actions ([`build-mac.yml`](.github/workflows/build-mac.yml)) and haven't been tried on a real Mac yet; Windows is the tested platform. **Linux:** [build it from source](#build-the-app-from-source).
 
 ---
 
@@ -165,7 +171,7 @@ PADI keeps running in the tray when you close the window. To start it with Windo
 
 ## Build the app from source
 
-You need Node 20+, [Rust](https://rustup.rs) (stable) and, on Windows, the *Desktop development with C++* tools from Visual Studio.
+You need Node 20+, [Rust](https://rustup.rs) (stable), and 7-Zip for the sound packs. On Windows, also the *Desktop development with C++* tools from Visual Studio; on macOS, the Xcode command line tools (`xcode-select --install`) and `brew install p7zip`.
 
 ```bash
 cd desktop
