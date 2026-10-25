@@ -1,0 +1,60 @@
+# Builds the macOS app (universal: Apple Silicon + Intel) and attaches the .dmg
+# to a GitHub release. Runs when a release is published, or by hand for an
+# existing tag (Actions > Build macOS app > Run workflow).
+name: Build macOS app
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the .dmg to
+        required: true
+        default: v0.1.0
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install 7-Zip (sound pack archives)
+        run: brew install p7zip
+
+      - run: npm ci
+
+      - name: Download sound packs
+        run: bash scripts/get-packs.sh
+
+      - name: Build universal .dmg
+        run: npx tauri build --target universal-apple-darwin --bundles dmg
+
+      - name: Attach to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          dmg=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$dmg" PADI_macOS_universal.dmg
+          gh release upload "$TAG" PADI_macOS_universal.dmg --clobber

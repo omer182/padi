@@ -43,6 +43,10 @@
     "publisher": "Omer Sher",
     "shortDescription": "PADI: sound engine, sampler and looper for the PADI MIDI pad",
     "copyright": "MIT. Sounds: GeneralUser GS (S. Christian Collins), FreePats",
-    "category": "Music"
+    "category": "Music",
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0"
+    }
   }
 }
