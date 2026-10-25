@@ -196,20 +196,20 @@ function Chip({ on, warn, label, detail }: { on: boolean; warn?: boolean; label:
 function SoundBrowser({ library, status }: { library: Library; status: Status | null }) {
   const openMenu = useMenu();
   const [query, setQuery] = useState("");
-  const [family, setFamily] = useState<number | "drums" | "all">("all");
-  const [font, setFont] = useState<number | "all">("all");
+  // "extra" = everything outside GeneralUser GS: the downloaded sound packs.
+  const [family, setFamily] = useState<number | "drums" | "extra" | "all">("all");
   const { presets, fonts } = library;
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return presets.filter((p) => {
-      if (q && !p.name.toLowerCase().includes(q)) return false;
-      if (font !== "all" && p.font !== font) return false;
+      if (q && !p.name.toLowerCase().includes(q) && !(fonts[p.font] ?? "").toLowerCase().includes(q)) return false;
       if (family === "all") return true;
+      if (family === "extra") return p.font > 0;
       if (family === "drums") return p.bank === 128;
       return p.bank !== 128 && Math.floor(p.program / 8) === family && p.font === 0;
     });
-  }, [presets, query, family, font]);
+  }, [presets, fonts, query, family]);
 
   const isCurrent = (p: Preset) => {
     const cur = p.bank === 128 ? status?.drumKit : status?.sound;
@@ -222,16 +222,12 @@ function SoundBrowser({ library, status }: { library: Library; status: Status | 
   return (
     <>
       <input className="search" placeholder="Search sounds…" value={query} onChange={(e) => setQuery(e.target.value)} />
-      {fonts.length > 1 && (
-        <div className="families">
-          <button className={font === "all" ? "fam active" : "fam"} onClick={() => setFont("all")}>All packs</button>
-          {fonts.map((f, i) => (
-            <button key={f} className={font === i ? "fam active" : "fam"} onClick={() => setFont(i)}>{f}</button>
-          ))}
-        </div>
-      )}
       <div className="families">
         <button className={family === "all" ? "fam active" : "fam"} onClick={() => setFamily("all")}>All</button>
+        {fonts.length > 1 && (
+          <button className={family === "extra" ? "fam extra active" : "fam extra"} onClick={() => setFamily("extra")}
+            title="Real guitars, grand piano and weird FX from the FreePats packs">★ Extra sounds</button>
+        )}
         {GM_FAMILIES.map((f, i) => (
           <button key={f} className={family === i ? "fam active" : "fam"} onClick={() => setFamily(i)}>{f}</button>
         ))}

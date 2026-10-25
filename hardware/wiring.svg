@@ -1,0 +1,298 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="1200" height="780" rx="18" fill="#ffffff"/>
+<text x="40" y="52" font-size="26" fill="#1d232b" font-weight="700">PADI wiring</text>
+<text x="40" y="78" font-size="14" fill="#7a8494">Raspberry Pi Pico · 16 keys · 0.96" SSD1306 OLED (I2C) · 10k potentiometer. Same-name labels are connected.</text>
+<rect x="540" y="100" width="230" height="600" rx="10" fill="#eef7f1" stroke="#2f8f57" stroke-width="2.5"/>
+<rect x="629.0" y="84" width="52" height="22" rx="4" fill="#dfe5ec" stroke="#7a8494"/>
+<text x="655.0" y="99" font-size="10" fill="#7a8494" text-anchor="middle">USB</text>
+<text x="655.0" y="668" font-size="17" fill="#2f8f57" font-weight="700" text-anchor="middle">Raspberry Pi Pico</text>
+<text x="655.0" y="686" font-size="11" fill="#7a8494" text-anchor="middle">top view, USB up</text>
+<circle cx="540" cy="128" r="4" fill="#1f9d61"/>
+<text x="550" y="132" font-size="12" fill="#1d232b">GP0</text>
+<text x="624" y="132" font-size="9" fill="#7a8494" text-anchor="end">1</text>
+<polyline points="540,128 506,128" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="118" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="132" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 1</text>
+<circle cx="540" cy="154" r="4" fill="#1f9d61"/>
+<text x="550" y="158" font-size="12" fill="#1d232b">GP1</text>
+<text x="624" y="158" font-size="9" fill="#7a8494" text-anchor="end">2</text>
+<polyline points="540,154 506,154" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="144" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="158" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 2</text>
+<circle cx="540" cy="180" r="4" fill="#3d4450"/>
+<text x="550" y="184" font-size="12" fill="#1d232b">GND</text>
+<text x="624" y="184" font-size="9" fill="#7a8494" text-anchor="end">3</text>
+<polyline points="540,180 518,180" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="518" y1="180" x2="518" y2="189"/><line x1="509" y1="189" x2="527" y2="189"/><line x1="512" y1="193" x2="524" y2="193"/><line x1="515" y1="197" x2="521" y2="197"/></g>
+<circle cx="540" cy="206" r="4" fill="#1f9d61"/>
+<text x="550" y="210" font-size="12" fill="#1d232b">GP2</text>
+<text x="624" y="210" font-size="9" fill="#7a8494" text-anchor="end">4</text>
+<polyline points="540,206 506,206" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="196" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="210" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 3</text>
+<circle cx="540" cy="232" r="4" fill="#1f9d61"/>
+<text x="550" y="236" font-size="12" fill="#1d232b">GP3</text>
+<text x="624" y="236" font-size="9" fill="#7a8494" text-anchor="end">5</text>
+<polyline points="540,232 506,232" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="222" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="236" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 4</text>
+<circle cx="540" cy="258" r="4" fill="#1f9d61"/>
+<text x="550" y="262" font-size="12" fill="#1d232b">GP4</text>
+<text x="624" y="262" font-size="9" fill="#7a8494" text-anchor="end">6</text>
+<polyline points="540,258 506,258" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="248" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="262" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 5</text>
+<circle cx="540" cy="284" r="4" fill="#1f9d61"/>
+<text x="550" y="288" font-size="12" fill="#1d232b">GP5</text>
+<text x="624" y="288" font-size="9" fill="#7a8494" text-anchor="end">7</text>
+<polyline points="540,284 506,284" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="274" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="288" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 6</text>
+<circle cx="540" cy="310" r="4" fill="#3d4450"/>
+<text x="550" y="314" font-size="12" fill="#1d232b">GND</text>
+<text x="624" y="314" font-size="9" fill="#7a8494" text-anchor="end">8</text>
+<polyline points="540,310 518,310" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="518" y1="310" x2="518" y2="319"/><line x1="509" y1="319" x2="527" y2="319"/><line x1="512" y1="323" x2="524" y2="323"/><line x1="515" y1="327" x2="521" y2="327"/></g>
+<circle cx="540" cy="336" r="4" fill="#1f9d61"/>
+<text x="550" y="340" font-size="12" fill="#1d232b">GP6</text>
+<text x="624" y="340" font-size="9" fill="#7a8494" text-anchor="end">9</text>
+<polyline points="540,336 506,336" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="326" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="340" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 7</text>
+<circle cx="540" cy="362" r="4" fill="#1f9d61"/>
+<text x="550" y="366" font-size="12" fill="#1d232b">GP7</text>
+<text x="624" y="366" font-size="9" fill="#7a8494" text-anchor="end">10</text>
+<polyline points="540,362 506,362" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="352" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="366" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 8</text>
+<circle cx="540" cy="388" r="4" fill="#1f9d61"/>
+<text x="550" y="392" font-size="12" fill="#1d232b">GP8</text>
+<text x="624" y="392" font-size="9" fill="#7a8494" text-anchor="end">11</text>
+<polyline points="540,388 506,388" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="378" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="392" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 9</text>
+<circle cx="540" cy="414" r="4" fill="#1f9d61"/>
+<text x="550" y="418" font-size="12" fill="#1d232b">GP9</text>
+<text x="624" y="418" font-size="9" fill="#7a8494" text-anchor="end">12</text>
+<polyline points="540,414 506,414" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="404" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="418" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 10</text>
+<circle cx="540" cy="440" r="4" fill="#3d4450"/>
+<text x="550" y="444" font-size="12" fill="#1d232b">GND</text>
+<text x="624" y="444" font-size="9" fill="#7a8494" text-anchor="end">13</text>
+<polyline points="540,440 518,440" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="518" y1="440" x2="518" y2="449"/><line x1="509" y1="449" x2="527" y2="449"/><line x1="512" y1="453" x2="524" y2="453"/><line x1="515" y1="457" x2="521" y2="457"/></g>
+<circle cx="540" cy="466" r="4" fill="#1f9d61"/>
+<text x="550" y="470" font-size="12" fill="#1d232b">GP10</text>
+<text x="624" y="470" font-size="9" fill="#7a8494" text-anchor="end">14</text>
+<polyline points="540,466 506,466" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="456" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="470" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 11</text>
+<circle cx="540" cy="492" r="4" fill="#1f9d61"/>
+<text x="550" y="496" font-size="12" fill="#1d232b">GP11</text>
+<text x="624" y="496" font-size="9" fill="#7a8494" text-anchor="end">15</text>
+<polyline points="540,492 506,492" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="482" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="496" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 12</text>
+<circle cx="540" cy="518" r="4" fill="#1f9d61"/>
+<text x="550" y="522" font-size="12" fill="#1d232b">GP12</text>
+<text x="624" y="522" font-size="9" fill="#7a8494" text-anchor="end">16</text>
+<polyline points="540,518 506,518" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="508" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="522" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 13</text>
+<circle cx="540" cy="544" r="4" fill="#1f9d61"/>
+<text x="550" y="548" font-size="12" fill="#1d232b">GP13</text>
+<text x="624" y="548" font-size="9" fill="#7a8494" text-anchor="end">17</text>
+<polyline points="540,544 506,544" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="534" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="548" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 14</text>
+<circle cx="540" cy="570" r="4" fill="#3d4450"/>
+<text x="550" y="574" font-size="12" fill="#1d232b">GND</text>
+<text x="624" y="574" font-size="9" fill="#7a8494" text-anchor="end">18</text>
+<polyline points="540,570 518,570" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="518" y1="570" x2="518" y2="579"/><line x1="509" y1="579" x2="527" y2="579"/><line x1="512" y1="583" x2="524" y2="583"/><line x1="515" y1="587" x2="521" y2="587"/></g>
+<circle cx="540" cy="596" r="4" fill="#1f9d61"/>
+<text x="550" y="600" font-size="12" fill="#1d232b">GP14</text>
+<text x="624" y="600" font-size="9" fill="#7a8494" text-anchor="end">19</text>
+<polyline points="540,596 506,596" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="586" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="600" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 15</text>
+<circle cx="540" cy="622" r="4" fill="#1f9d61"/>
+<text x="550" y="626" font-size="12" fill="#1d232b">GP15</text>
+<text x="624" y="626" font-size="9" fill="#7a8494" text-anchor="end">20</text>
+<polyline points="540,622 506,622" fill="none" stroke="#1f9d61" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="444" y="612" width="62" height="20" rx="10" fill="#1f9d61"/>
+<text x="475" y="626" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad 16</text>
+<circle cx="770" cy="128" r="4" fill="#b9c1cc"/>
+<text x="760" y="132" font-size="12" fill="#7a8494" text-anchor="end">VBUS</text>
+<text x="678" y="132" font-size="9" fill="#7a8494">40</text>
+<circle cx="770" cy="154" r="4" fill="#b9c1cc"/>
+<text x="760" y="158" font-size="12" fill="#7a8494" text-anchor="end">VSYS</text>
+<text x="678" y="158" font-size="9" fill="#7a8494">39</text>
+<circle cx="770" cy="180" r="4" fill="#3d4450"/>
+<text x="760" y="184" font-size="12" fill="#1d232b" text-anchor="end">GND</text>
+<text x="678" y="184" font-size="9" fill="#7a8494">38</text>
+<circle cx="770" cy="206" r="4" fill="#b9c1cc"/>
+<text x="760" y="210" font-size="12" fill="#7a8494" text-anchor="end">3V3_EN</text>
+<text x="678" y="210" font-size="9" fill="#7a8494">37</text>
+<circle cx="770" cy="232" r="4" fill="#d23f3f"/>
+<text x="760" y="236" font-size="12" fill="#1d232b" text-anchor="end">3V3(OUT)</text>
+<text x="678" y="236" font-size="9" fill="#7a8494">36</text>
+<circle cx="770" cy="258" r="4" fill="#b9c1cc"/>
+<text x="760" y="262" font-size="12" fill="#7a8494" text-anchor="end">ADC_VREF</text>
+<text x="678" y="262" font-size="9" fill="#7a8494">35</text>
+<circle cx="770" cy="284" r="4" fill="#b9c1cc"/>
+<text x="760" y="288" font-size="12" fill="#7a8494" text-anchor="end">GP28</text>
+<text x="678" y="288" font-size="9" fill="#7a8494">34</text>
+<circle cx="770" cy="310" r="4" fill="#3d4450"/>
+<text x="760" y="314" font-size="12" fill="#1d232b" text-anchor="end">AGND</text>
+<text x="678" y="314" font-size="9" fill="#7a8494">33</text>
+<circle cx="770" cy="336" r="4" fill="#b9c1cc"/>
+<text x="760" y="340" font-size="12" fill="#7a8494" text-anchor="end">GP27</text>
+<text x="678" y="340" font-size="9" fill="#7a8494">32</text>
+<circle cx="770" cy="362" r="4" fill="#8a3fd2"/>
+<text x="760" y="366" font-size="12" fill="#1d232b" text-anchor="end">GP26</text>
+<text x="678" y="366" font-size="9" fill="#7a8494">31</text>
+<circle cx="770" cy="388" r="4" fill="#b9c1cc"/>
+<text x="760" y="392" font-size="12" fill="#7a8494" text-anchor="end">RUN</text>
+<text x="678" y="392" font-size="9" fill="#7a8494">30</text>
+<circle cx="770" cy="414" r="4" fill="#b9c1cc"/>
+<text x="760" y="418" font-size="12" fill="#7a8494" text-anchor="end">GP22</text>
+<text x="678" y="418" font-size="9" fill="#7a8494">29</text>
+<circle cx="770" cy="440" r="4" fill="#b9c1cc"/>
+<text x="760" y="444" font-size="12" fill="#7a8494" text-anchor="end">GND</text>
+<text x="678" y="444" font-size="9" fill="#7a8494">28</text>
+<circle cx="770" cy="466" r="4" fill="#b9c1cc"/>
+<text x="760" y="470" font-size="12" fill="#7a8494" text-anchor="end">GP21</text>
+<text x="678" y="470" font-size="9" fill="#7a8494">27</text>
+<circle cx="770" cy="492" r="4" fill="#b9c1cc"/>
+<text x="760" y="496" font-size="12" fill="#7a8494" text-anchor="end">GP20</text>
+<text x="678" y="496" font-size="9" fill="#7a8494">26</text>
+<circle cx="770" cy="518" r="4" fill="#b9c1cc"/>
+<text x="760" y="522" font-size="12" fill="#7a8494" text-anchor="end">GP19</text>
+<text x="678" y="522" font-size="9" fill="#7a8494">25</text>
+<circle cx="770" cy="544" r="4" fill="#b9c1cc"/>
+<text x="760" y="548" font-size="12" fill="#7a8494" text-anchor="end">GP18</text>
+<text x="678" y="548" font-size="9" fill="#7a8494">24</text>
+<circle cx="770" cy="570" r="4" fill="#b9c1cc"/>
+<text x="760" y="574" font-size="12" fill="#7a8494" text-anchor="end">GND</text>
+<text x="678" y="574" font-size="9" fill="#7a8494">23</text>
+<circle cx="770" cy="596" r="4" fill="#c7770a"/>
+<text x="760" y="600" font-size="12" fill="#1d232b" text-anchor="end">GP17</text>
+<text x="678" y="600" font-size="9" fill="#7a8494">22</text>
+<circle cx="770" cy="622" r="4" fill="#2f6fdb"/>
+<text x="760" y="626" font-size="12" fill="#1d232b" text-anchor="end">GP16</text>
+<text x="678" y="626" font-size="9" fill="#7a8494">21</text>
+<polyline points="770,180 794,180" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="794" y1="180" x2="794" y2="189"/><line x1="785" y1="189" x2="803" y2="189"/><line x1="788" y1="193" x2="800" y2="193"/><line x1="791" y1="197" x2="797" y2="197"/></g>
+<polyline points="770,232 796,232" fill="none" stroke="#d23f3f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#d23f3f" stroke-width="2"><line x1="796" y1="232" x2="796" y2="220"/><line x1="787" y1="220" x2="805" y2="220"/></g><text x="796" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="#d23f3f">3V3</text>
+<polyline points="770,310 794,310" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="794" y1="310" x2="794" y2="319"/><line x1="785" y1="319" x2="803" y2="319"/><line x1="788" y1="323" x2="800" y2="323"/><line x1="791" y1="327" x2="797" y2="327"/></g>
+<g stroke="#d23f3f" stroke-width="2"><line x1="930" y1="226" x2="930" y2="214"/><line x1="921" y1="214" x2="939" y2="214"/></g><text x="930" y="209" text-anchor="middle" font-size="12" font-weight="700" fill="#d23f3f">3V3</text>
+<polyline points="930,226 930,250" fill="none" stroke="#d23f3f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="930,250 940,258 920,270 940,282 920,294 940,306 920,318 930,320" fill="none" stroke="#1d232b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="930,320 930,330" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="930" y1="330" x2="930" y2="339"/><line x1="921" y1="339" x2="939" y2="339"/><line x1="924" y1="343" x2="936" y2="343"/><line x1="927" y1="347" x2="933" y2="347"/></g>
+<polyline points="770,362 860,362 860,285 906,285" fill="none" stroke="#8a3fd2" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="916,285 904,279 904,291" fill="#8a3fd2"/>
+<text x="956" y="270" font-size="15" fill="#1d232b" font-weight="700">Knob</text>
+<text x="956" y="289" font-size="12" fill="#7a8494">10k linear pot (B10K)</text>
+<text x="956" y="306" font-size="12" fill="#7a8494">middle leg → GP26 (ADC0)</text>
+<text x="956" y="323" font-size="12" fill="#7a8494">outer legs → 3V3 and AGND</text>
+<rect x="890" y="468" width="270" height="158" rx="10" fill="#f2f5f9" stroke="#1d232b" stroke-width="2"/>
+<rect x="976" y="486" width="166" height="96" rx="4" fill="#0d1117"/>
+<text x="1059" y="530" text-anchor="middle" font-size="22" font-weight="800" fill="#7cf5b4" letter-spacing="3">PADI</text>
+<text x="1059" y="554" text-anchor="middle" font-size="10" fill="#7cf5b4" opacity=".7">128×64 SSD1306</text>
+<text x="1059" y="608" font-size="12" fill="#7a8494" text-anchor="middle">0.96" I2C OLED (address 0x3C)</text>
+<circle cx="890" cy="494" r="4" fill="#1d232b"/>
+<text x="900" y="498" font-size="12" fill="#1d232b" font-weight="600">GND</text>
+<circle cx="890" cy="524" r="4" fill="#1d232b"/>
+<text x="900" y="528" font-size="12" fill="#1d232b" font-weight="600">VCC</text>
+<circle cx="890" cy="554" r="4" fill="#1d232b"/>
+<text x="900" y="558" font-size="12" fill="#1d232b" font-weight="600">SCL</text>
+<circle cx="890" cy="584" r="4" fill="#1d232b"/>
+<text x="900" y="588" font-size="12" fill="#1d232b" font-weight="600">SDA</text>
+<polyline points="890,494 864,494" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="864" y1="494" x2="864" y2="503"/><line x1="855" y1="503" x2="873" y2="503"/><line x1="858" y1="507" x2="870" y2="507"/><line x1="861" y1="511" x2="867" y2="511"/></g>
+<polyline points="890,524 834,524" fill="none" stroke="#d23f3f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#d23f3f" stroke-width="2"><line x1="834" y1="524" x2="834" y2="512"/><line x1="825" y1="512" x2="843" y2="512"/></g><text x="834" y="507" text-anchor="middle" font-size="12" font-weight="700" fill="#d23f3f">3V3</text>
+<polyline points="770,596 800,596 800,554 890,554" fill="none" stroke="#c7770a" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="770,622 822,622 822,584 890,584" fill="none" stroke="#2f6fdb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="850" y="548" font-size="11" fill="#c7770a" font-weight="700" text-anchor="middle">SCL</text>
+<text x="856" y="578" font-size="11" fill="#2f6fdb" font-weight="700" text-anchor="middle">SDA</text>
+<text x="40" y="150" font-size="15" fill="#1d232b" font-weight="700">16 keys (MX-style switches)</text>
+<rect x="40" y="172" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="76.0" y="206" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 13</text>
+<text x="76.0" y="225" font-size="11.5" fill="#7a8494" text-anchor="middle">GP12</text>
+<rect x="122" y="172" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="158.0" y="206" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 14</text>
+<text x="158.0" y="225" font-size="11.5" fill="#7a8494" text-anchor="middle">GP13</text>
+<rect x="204" y="172" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="240.0" y="206" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 15</text>
+<text x="240.0" y="225" font-size="11.5" fill="#7a8494" text-anchor="middle">GP14</text>
+<rect x="286" y="172" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="322.0" y="206" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 16</text>
+<text x="322.0" y="225" font-size="11.5" fill="#7a8494" text-anchor="middle">GP15</text>
+<rect x="40" y="254" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="76.0" y="288" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 9</text>
+<text x="76.0" y="307" font-size="11.5" fill="#7a8494" text-anchor="middle">GP8</text>
+<rect x="122" y="254" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="158.0" y="288" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 10</text>
+<text x="158.0" y="307" font-size="11.5" fill="#7a8494" text-anchor="middle">GP9</text>
+<rect x="204" y="254" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="240.0" y="288" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 11</text>
+<text x="240.0" y="307" font-size="11.5" fill="#7a8494" text-anchor="middle">GP10</text>
+<rect x="286" y="254" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="322.0" y="288" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 12</text>
+<text x="322.0" y="307" font-size="11.5" fill="#7a8494" text-anchor="middle">GP11</text>
+<rect x="40" y="336" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="76.0" y="370" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 5</text>
+<text x="76.0" y="389" font-size="11.5" fill="#7a8494" text-anchor="middle">GP4</text>
+<rect x="122" y="336" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="158.0" y="370" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 6</text>
+<text x="158.0" y="389" font-size="11.5" fill="#7a8494" text-anchor="middle">GP5</text>
+<rect x="204" y="336" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="240.0" y="370" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 7</text>
+<text x="240.0" y="389" font-size="11.5" fill="#7a8494" text-anchor="middle">GP6</text>
+<rect x="286" y="336" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="322.0" y="370" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 8</text>
+<text x="322.0" y="389" font-size="11.5" fill="#7a8494" text-anchor="middle">GP7</text>
+<rect x="40" y="418" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="76.0" y="452" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 1</text>
+<text x="76.0" y="471" font-size="11.5" fill="#7a8494" text-anchor="middle">GP0</text>
+<rect x="122" y="418" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="158.0" y="452" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 2</text>
+<text x="158.0" y="471" font-size="11.5" fill="#7a8494" text-anchor="middle">GP1</text>
+<rect x="204" y="418" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="240.0" y="452" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 3</text>
+<text x="240.0" y="471" font-size="11.5" fill="#7a8494" text-anchor="middle">GP2</text>
+<rect x="286" y="418" width="72" height="72" rx="10" fill="#f2f5f9" stroke="#c9d0d9" stroke-width="1.5"/>
+<text x="322.0" y="452" font-size="15" fill="#1f9d61" font-weight="700" text-anchor="middle">Pad 4</text>
+<text x="322.0" y="471" font-size="11.5" fill="#7a8494" text-anchor="middle">GP3</text>
+<text x="40" y="530" font-size="13" fill="#1d232b" font-weight="700">How each key connects</text>
+<rect x="40" y="553" width="62" height="22" rx="11" fill="#1f9d61"/>
+<text x="71" y="568" font-size="11.5" fill="#fff" font-weight="700" text-anchor="middle">Pad N</text>
+<polyline points="102,564 160,564" fill="none" stroke="#1f9d61" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="164" cy="564" r="4" fill="none" stroke="#1d232b" stroke-width="2"/><circle cx="216" cy="564" r="4" fill="none" stroke="#1d232b" stroke-width="2"/><line x1="167" y1="561" x2="212" y2="544" stroke="#1d232b" stroke-width="2"/>
+<polyline points="220,564 272,564" fill="none" stroke="#3d4450" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#3d4450" stroke-width="2"><line x1="272" y1="564" x2="272" y2="573"/><line x1="263" y1="573" x2="281" y2="573"/><line x1="266" y1="577" x2="278" y2="577"/><line x1="269" y1="581" x2="275" y2="581"/></g>
+<text x="190" y="590" font-size="11" fill="#7a8494" text-anchor="middle">switch</text>
+<text x="40" y="616" font-size="12" fill="#7a8494">One leg to its GP pin, the other leg to GND.</text>
+<text x="40" y="633" font-size="12" fill="#7a8494">Chain all 16 GND legs together, then to any GND pin.</text>
+<text x="40" y="650" font-size="12" fill="#7a8494">No diodes or resistors needed (internal pull-ups).</text>
+<line x1="890" y1="690" x2="912" y2="690" stroke="#1f9d61" stroke-width="4" stroke-linecap="round"/>
+<text x="920" y="694" font-size="12" fill="#1d232b">Keys</text>
+<line x1="985" y1="690" x2="1007" y2="690" stroke="#d23f3f" stroke-width="4" stroke-linecap="round"/>
+<text x="1015" y="694" font-size="12" fill="#1d232b">3V3</text>
+<line x1="1080" y1="690" x2="1102" y2="690" stroke="#3d4450" stroke-width="4" stroke-linecap="round"/>
+<text x="1110" y="694" font-size="12" fill="#1d232b">GND</text>
+<line x1="890" y1="714" x2="912" y2="714" stroke="#8a3fd2" stroke-width="4" stroke-linecap="round"/>
+<text x="920" y="718" font-size="12" fill="#1d232b">Knob</text>
+<line x1="985" y1="714" x2="1007" y2="714" stroke="#c7770a" stroke-width="4" stroke-linecap="round"/>
+<text x="1015" y="718" font-size="12" fill="#1d232b">SCL</text>
+<line x1="1080" y1="714" x2="1102" y2="714" stroke="#2f6fdb" stroke-width="4" stroke-linecap="round"/>
+<text x="1110" y="718" font-size="12" fill="#1d232b">SDA</text>
+<text x="540" y="730" font-size="12" fill="#7a8494">Menu LED = the Pico's onboard LED (GP25). Nothing to wire.</text>
+<text x="540" y="748" font-size="12" fill="#7a8494">Power comes from USB. Small numbers are physical pin numbers.</text>
+</svg>
