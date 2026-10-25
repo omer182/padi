@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/macropad.webp" alt="PADI: a 16-key MIDI pad with an OLED screen and a knob, in a black 3D-printed case" width="100%">
+<img src="docs/images/banner.webp" alt="PADI: a 16-key MIDI pad with an OLED screen and a knob, in a navy 3D-printed case on a sunny desk" width="100%">
 
 # PADI
 
