@@ -37,6 +37,8 @@ Raspberry Pi Pico · 0.96" OLED · one knob · 3D-printed case · Windows & macO
 
 ## The app
 
+<!-- VIDEO: on github.com, edit this file and drag docs/images/padi-demo.mp4 onto the next line (it becomes a playable video with sound) -->
+
 <div align="center">
 <img src="docs/images/padi-demo.gif" alt="PADI app: pads light up as a riff plays, the matching keys light on the keyboard, and the looper runs" width="100%">
 </div>

@@ -133,6 +133,19 @@ async function frame(i: number, total = 48) {
   });
 }
 
-(window as unknown as { padiDemo: unknown }).padiDemo = { frame, setPads, scene };
+// Seconds-based timeline for the README video; the audio track is rendered
+// from the same pattern (2 bars of eighths at 96 BPM, loop = 2 bars).
+const BPM = 96, STEP = 60 / BPM / 2, HOLD = 0.25, LOOP = 16 * STEP;
+export const VIDEO_RIFF = [[0, 7], [4], [9], [4], [5, 12], [9], [7], [9], [3, 10], [7], [12], [7], [4, 11], [8], [13], [14]];
+
+async function at(t: number) {
+  const step = Math.floor(t / STEP);
+  await setPads(t - step * STEP < HOLD ? VIDEO_RIFF[step % VIDEO_RIFF.length] : []);
+  await emit("transport", {
+    pos: (t % LOOP) / LOOP, seconds: LOOP, playing: true, recording: false, countinBeats: 0, mic: 0,
+  });
+}
+
+(window as unknown as { padiDemo: unknown }).padiDemo = { frame, at, setPads, scene };
 // A still frame for screenshots: something held, loop mid-way.
 setTimeout(() => frame(sampler ? 12 : 6), 300);
