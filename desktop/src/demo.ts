@@ -146,6 +146,44 @@ async function at(t: number) {
   });
 }
 
-(window as unknown as { padiDemo: unknown }).padiDemo = { frame, at, setPads, scene };
+// Generic state push for scripted videos (desktop/scripts/demo-video): any
+// field left out stays as it is.
+interface DemoState {
+  pads?: number[];
+  notes?: number[];
+  device?: Record<string, number>;
+  sound?: Record<string, unknown>;
+  drumKit?: Record<string, unknown>;
+  params?: Partial<typeof params>;
+  studio?: Record<string, unknown>;
+  transport?: Record<string, unknown>;
+}
+let shownNotes: number[] = [];
+async function apply(s: DemoState) {
+  if (s.device || s.sound || s.drumKit || s.params) {
+    Object.assign(device, s.device ?? {});
+    if (s.sound) status.sound = { ...status.sound, ...s.sound };
+    if (s.drumKit) status.drumKit = { ...status.drumKit, ...s.drumKit };
+    if (s.params) status.sound = { ...status.sound, params: { ...status.sound.params, ...s.params } };
+    await emit("status", { ...status, device: { ...device } });
+  }
+  if (s.studio) {
+    Object.assign(studio, s.studio);
+    await emit("studio", { ...studio });
+  }
+  if (s.pads) {
+    for (const p of held.filter((p) => !s.pads!.includes(p))) await emit("pad", { pad: p, down: false });
+    for (const p of s.pads.filter((p) => !held.includes(p))) await emit("pad", { pad: p, down: true });
+    held = s.pads;
+  }
+  if (s.notes) {
+    for (const n of shownNotes.filter((n) => !s.notes!.includes(n))) await emit("midi", { kind: "off", ch: 0, a: n, b: 0 });
+    for (const n of s.notes.filter((n) => !shownNotes.includes(n))) await emit("midi", { kind: "on", ch: 0, a: n, b: 100 });
+    shownNotes = s.notes;
+  }
+  if (s.transport) await emit("transport", s.transport);
+}
+
+(window as unknown as { padiDemo: unknown }).padiDemo = { frame, at, apply, setPads, scene };
 // A still frame for screenshots: something held, loop mid-way.
 setTimeout(() => frame(sampler ? 12 : 6), 300);
