@@ -175,8 +175,9 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .pad.empty { border-style: dashed; background: transparent; }
 .pad.selected-pad { border-color: var(--accent); }
 .pad-sample-name { color: var(--text); }
-.pad-badges { position: absolute; top: 5px; right: 6px; display: flex; gap: 3px; }
-.pad-badges i { font-style: normal; font-size: 9px; padding: 0 4px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
+/* One row of tags right of the pad number; on tiny pads the last ones clip. */
+.pad-badges { position: absolute; top: 5px; left: 24px; right: 5px; display: flex; justify-content: flex-end; gap: 2px; overflow: hidden; }
+.pad-badges i { flex: none; font-style: normal; font-size: 8.5px; padding: 0 3px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
 .pad.down {
   transform: scale(0.96); background: var(--accent); border-color: var(--accent);
   box-shadow: 0 0 22px rgba(124, 245, 180, 0.45);
@@ -232,8 +233,8 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, 0.08); }
 .tick.bar { background: rgba(255, 255, 255, 0.25); }
 .layers { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.layer { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 5px; font-size: 11px; padding: 0 7px; line-height: 18px; }
-.layer.muted { border-color: var(--line); background: transparent; color: var(--muted); text-decoration: line-through; }
+.layer { flex: none; white-space: nowrap; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 5px; font-size: 11px; padding: 0 7px; line-height: 18px; }
+.layer.muted { border-style: dashed; border-color: var(--muted); background: transparent; color: var(--muted); }
 .tempo { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); }
 .tempo label { display: flex; align-items: center; gap: 5px; }
 .tempo input[type="number"], .tempo select { width: 54px; font: inherit; padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }

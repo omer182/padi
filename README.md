@@ -8,7 +8,7 @@
 
 Raspberry Pi Pico · 0.96" OLED · one knob · 3D-printed case · Windows & macOS app (Tauri + Rust)
 
-[**Download**](https://github.com/omer182/padi/releases/latest) · [Build it](#1-build-the-pad) · [Flash it](#2-flash-the-firmware) · [Install the app](#3-install-the-app) · [Play](#4-play)
+[**Download**](https://github.com/omer182/padi/releases/latest) · [See the app](#the-app) · [Build it](#1-build-the-pad) · [Flash it](#2-flash-the-firmware) · [Install the app](#3-install-the-app) · [Play](#4-play)
 
 </div>
 
@@ -32,6 +32,33 @@ Raspberry Pi Pico · 0.96" OLED · one knob · 3D-printed case · Windows & macO
 - 💾 **Save** your loops or the whole session as WAV files
 - 👀 **Live view** of the pads, the knob and the notes as you play, with right-click menus on everything
 - Runs in the tray and reconnects by itself when you plug the pad in
+
+---
+
+## The app
+
+<div align="center">
+<img src="docs/images/padi-demo.gif" alt="PADI app: pads light up as a riff plays, the matching keys light on the keyboard, and the looper runs" width="100%">
+</div>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/app-main.webp" alt="Main screen: sound list, pads with note names, sound editor with reverb, echo and chorus, looper and keyboard"></td>
+<td width="50%"><img src="docs/images/app-sampler.webp" alt="Sampler: a kit of recorded noises with waveforms on each pad, and a pad editor with Robot voice, echo and pitch"></td>
+</tr>
+<tr>
+<td><b>Play.</b> Pick any sound, see every pad's note, and shape the sound with reverb, echo, chorus and more. Save your version to <i>My sounds</i>.</td>
+<td><b>Sample.</b> Your own recordings on the pads. Each one gets a play mode, a Robot or Lo-fi voice, echo, pitch and reverse.</td>
+</tr>
+<tr>
+<td><img src="docs/images/app-record.webp" alt="Record mode: the pad grid outlined in red, the mic level meter moving, and one pad showing REC"></td>
+<td><img src="docs/images/app-menu.webp" alt="Right-click menu on a pad: play, record over, play mode, reverse, robot voice, copy, spread and clear"></td>
+</tr>
+<tr>
+<td><b>Record.</b> Press Record, hold a pad and make a noise. The take is trimmed, levelled and dropped on that pad.</td>
+<td><b>Right-click anything.</b> Pads, loop layers, kits and sounds all have their own menus. Ctrl+Z undoes.</td>
+</tr>
+</table>
 
 ---
 
@@ -182,6 +209,8 @@ npm run tauri build            # make the installer (src-tauri/target/release/bu
 ```
 
 The sound packs aren't in git (one is over 100 MB). Without them the app still works, with the General MIDI set only.
+
+**UI demo mode:** `npm run dev` and open http://localhost:1420 in a normal browser. With no backend, the UI runs on sample data ([`src/demo.ts`](desktop/src/demo.ts)), which is handy for working on the interface without the pad. Add `?scene=sampler` or `?scene=armed` for the other screens. The screenshots above come from it.
 
 ---
 

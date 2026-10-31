@@ -437,10 +437,10 @@ function SamplerGrid({ studio, transport, pads, setPads, selected, setSelected }
                 ) : (
                   <span className="pad-sub">{armed ? "hold to record" : "empty"}</span>
                 )}
-                {s && (s.mode !== "oneshot" || s.fx !== "none" || s.echo > 0) && (
+                {s && (s.mode === "loop" || s.fx !== "none" || s.echo > 0) && (
                   <span className="pad-badges">
-                    {s.mode !== "oneshot" && <i>{s.mode}</i>}
-                    {s.fx !== "none" && <i>{s.fx === "crush" ? "lo-fi" : s.fx}</i>}
+                    {s.mode === "loop" && <i title="Loops while held">↻</i>}
+                    {s.fx !== "none" && <i>{s.fx === "crush" ? "lo-fi" : "bot"}</i>}
                     {s.echo > 0 && <i>echo</i>}
                   </span>
                 )}
